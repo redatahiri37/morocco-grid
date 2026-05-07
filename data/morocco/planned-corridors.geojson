@@ -1,0 +1,324 @@
+{
+  "type": "FeatureCollection",
+  "metadata": {
+    "notes": "Planned HV/EHV corridors — ES-MA III, Xlinks, Dakhla HVDC, WBG 2018 future lines."
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "hvdc-dakhla-agadir",
+        "name": "HVDC Sahara corridor Dakhla → Agadir (planned)",
+        "voltage_kv": 500,
+        "kind": "hvdc_planned",
+        "status": "planned",
+        "precision": "approximate",
+        "source": "MIICEN announcements",
+        "source_url": "https://www.mem.gov.ma/"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -15.93,
+            23.71
+          ],
+          [
+            -14.1,
+            26.3
+          ],
+          [
+            -12.3,
+            28.4
+          ],
+          [
+            -10.2,
+            30.1
+          ],
+          [
+            -9.6,
+            30.42
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "interconnector-es-ma-3",
+        "name": "Spain–Morocco Interconnector III (planned, 2030)",
+        "voltage_kv": 400,
+        "status": "planned",
+        "precision": "approximate",
+        "kind": "interconnector_ac_submarine_planned",
+        "capacity_mw": 700,
+        "commissioning_year": 2030,
+        "source": "REE · ONEE press",
+        "source_url": "https://www.reuters.com/business/energy/spain-morocco-plan-third-power-link-bolster-grid-2024/"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -5.6,
+            36.008
+          ],
+          [
+            -5.49,
+            35.901
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "interconnector-xlinks-uk-ma",
+        "name": "Xlinks Morocco-UK Power Project (HVDC, planned)",
+        "voltage_kv": 525,
+        "status": "planned",
+        "precision": "approximate",
+        "kind": "hvdc_planned_submarine",
+        "capacity_mw": 3600,
+        "commissioning_year": 2031,
+        "source": "Xlinks press",
+        "source_url": "https://xlinks.co/morocco-uk-power-project/"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -13.2,
+            28.5
+          ],
+          [
+            -12.0,
+            31.0
+          ],
+          [
+            -10.0,
+            36.0
+          ],
+          [
+            -9.5,
+            41.0
+          ],
+          [
+            -8.0,
+            45.0
+          ],
+          [
+            -6.5,
+            48.5
+          ],
+          [
+            -5.5,
+            50.2
+          ],
+          [
+            -5.0,
+            51.0
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -8.552148047816711,
+            32.128564671709704
+          ],
+          [
+            -8.257660838934,
+            31.755602354633115
+          ]
+        ]
+      },
+      "properties": {
+        "id": "wbg-planned-2018-1",
+        "name": "225 kV line (WBG 2018 masterplan, planned)",
+        "voltage_kv": 225,
+        "kind": "planned",
+        "status": "planned",
+        "precision": "approximate",
+        "source": "World Bank Group — Morocco Power Sector Masterplan (2018)",
+        "source_url": "https://datacatalog.worldbank.org/"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -7.38204053576551,
+            31.724601948142936
+          ],
+          [
+            -7.145899251438011,
+            31.619553761942367
+          ],
+          [
+            -6.918375027655001,
+            31.561829305808
+          ],
+          [
+            -6.846478202040493,
+            31.33768385287914
+          ],
+          [
+            -6.800187332674755,
+            31.21316320350494
+          ]
+        ]
+      },
+      "properties": {
+        "id": "wbg-planned-2018-2",
+        "name": "225 kV line (WBG 2018 masterplan, planned)",
+        "voltage_kv": 225,
+        "kind": "planned",
+        "status": "planned",
+        "precision": "approximate",
+        "source": "World Bank Group — Morocco Power Sector Masterplan (2018)",
+        "source_url": "https://datacatalog.worldbank.org/"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -8.718875209522805,
+            31.62150079866177
+          ],
+          [
+            -8.760951051049592,
+            31.58310423236442
+          ],
+          [
+            -8.797276783181108,
+            31.45795318277524
+          ],
+          [
+            -8.8264012758519,
+            31.39920441313752
+          ],
+          [
+            -8.883017201218278,
+            31.366561000995077
+          ],
+          [
+            -8.982760356798574,
+            31.32848861948971
+          ],
+          [
+            -9.05713547436321,
+            31.202131928514998
+          ],
+          [
+            -9.098989271627529,
+            31.049832883465452
+          ],
+          [
+            -9.139937689273864,
+            30.93686059012344
+          ],
+          [
+            -9.222216450307705,
+            30.557810966686276
+          ]
+        ]
+      },
+      "properties": {
+        "id": "wbg-planned-2018-3",
+        "name": "400 kV line (WBG 2018 masterplan, planned)",
+        "voltage_kv": 400,
+        "kind": "planned",
+        "status": "planned",
+        "precision": "approximate",
+        "source": "World Bank Group — Morocco Power Sector Masterplan (2018)",
+        "source_url": "https://datacatalog.worldbank.org/"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -7.331949343936529,
+            33.43975718280551
+          ],
+          [
+            -7.485801357273019,
+            33.32142414334781
+          ],
+          [
+            -8.343659157708176,
+            33.11059202239821
+          ],
+          [
+            -8.510443568372843,
+            33.147501725455
+          ]
+        ]
+      },
+      "properties": {
+        "id": "wbg-planned-2018-4",
+        "name": "400 kV line (WBG 2018 masterplan, planned)",
+        "voltage_kv": 400,
+        "kind": "planned",
+        "status": "planned",
+        "precision": "approximate",
+        "source": "World Bank Group — Morocco Power Sector Masterplan (2018)",
+        "source_url": "https://datacatalog.worldbank.org/"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -9.272285768086212,
+            32.34841294775297
+          ],
+          [
+            -9.230161250297575,
+            32.317343590406544
+          ],
+          [
+            -9.115796776021213,
+            32.38116104096778
+          ],
+          [
+            -8.920038200797764,
+            32.389162525772655
+          ],
+          [
+            -8.741639743840896,
+            32.22999075835933
+          ],
+          [
+            -8.591169584615997,
+            32.1368520248136
+          ]
+        ]
+      },
+      "properties": {
+        "id": "wbg-planned-2018-5",
+        "name": "400 kV line (WBG 2018 masterplan, planned)",
+        "voltage_kv": 400,
+        "kind": "planned",
+        "status": "planned",
+        "precision": "approximate",
+        "source": "World Bank Group — Morocco Power Sector Masterplan (2018)",
+        "source_url": "https://datacatalog.worldbank.org/"
+      }
+    }
+  ]
+}

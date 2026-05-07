@@ -1,133 +1,206 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Morocco Grid Explorer</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <link rel="stylesheet" href="style.css" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Energy × Digital Nexus — Morocco Infrastructure Map</title>
+
+<meta name="description" content="Interactive multi-layer map of Morocco's power generation, transmission grid, industrial load and data-center pipeline. v1.0 of a platform scaling to MENA.">
+<meta name="author" content="Reda Tahiri">
+<meta property="og:title" content="Energy × Digital Nexus — Morocco Infrastructure Map">
+<meta property="og:description" content="Power, grid, industry and data centers — on one transparent map.">
+<meta property="og:type" content="website">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet">
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+
+<link rel="stylesheet" href="./style.css">
 </head>
-<body class="dark">
-  <div id="app">
+<body data-theme="dark">
 
-    <header id="header">
-      <div class="header-inner">
-        <div class="logo">
-          <svg class="logo-flag" viewBox="0 0 30 20" aria-hidden="true">
-            <rect width="30" height="20" fill="#C1272D"/>
-            <polygon points="15,4 16.9,9.8 22.9,9.8 18,13.2 19.9,19 15,15.6 10.1,19 12,13.2 7.1,9.8 13.1,9.8" fill="none" stroke="#006233" stroke-width="1.2"/>
-          </svg>
-          <span class="logo-text">Morocco Grid Explorer</span>
-        </div>
-
-        <nav class="header-controls">
-          <div class="control-group">
-            <label for="layerSelect">Layer</label>
-            <select id="layerSelect">
-              <option value="population">Population Density</option>
-              <option value="elevation">Elevation</option>
-              <option value="temperature">Temperature</option>
-              <option value="rainfall">Annual Rainfall</option>
-            </select>
-          </div>
-
-          <div class="control-group">
-            <label for="gridSizeSelect">Grid</label>
-            <select id="gridSizeSelect">
-              <option value="1">1°</option>
-              <option value="0.5" selected>0.5°</option>
-              <option value="0.25">0.25°</option>
-            </select>
-          </div>
-
-          <div class="control-group">
-            <label for="opacitySlider">Opacity</label>
-            <input type="range" id="opacitySlider" min="0.2" max="1" step="0.05" value="0.72" />
-          </div>
-
-          <button id="themeToggle" class="icon-btn" title="Toggle theme" aria-label="Toggle theme">
-            <svg id="iconSun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
-              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
-              <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
-              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
-            </svg>
-            <svg id="iconMoon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none">
-              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-            </svg>
-          </button>
-        </nav>
-      </div>
-    </header>
-
-    <div id="main">
-
-      <aside id="sidebar">
-
-        <section class="panel">
-          <h3 class="panel-title">Statistics</h3>
-          <div id="stats" class="stats-grid">
-            <div class="stat-card">
-              <span class="stat-label">Grid Cells</span>
-              <span class="stat-value" id="statCells">—</span>
-            </div>
-            <div class="stat-card">
-              <span class="stat-label">Average</span>
-              <span class="stat-value" id="statAvg">—</span>
-            </div>
-            <div class="stat-card">
-              <span class="stat-label">Maximum</span>
-              <span class="stat-value accent-red" id="statMax">—</span>
-            </div>
-            <div class="stat-card">
-              <span class="stat-label">Minimum</span>
-              <span class="stat-value accent-green" id="statMin">—</span>
-            </div>
-          </div>
-        </section>
-
-        <section class="panel">
-          <h3 class="panel-title">Selected Cell</h3>
-          <div id="cellInfo">
-            <p class="hint-text">Click a grid cell to inspect it</p>
-          </div>
-        </section>
-
-        <section class="panel">
-          <h3 class="panel-title">Legend</h3>
-          <div id="legend"></div>
-        </section>
-
-        <section class="panel">
-          <h3 class="panel-title">Morocco at a Glance</h3>
-          <ul class="fact-list">
-            <li><span>Area</span><span>710,850 km²</span></li>
-            <li><span>Population</span><span>37.5 M</span></li>
-            <li><span>Capital</span><span>Rabat</span></li>
-            <li><span>Largest City</span><span>Casablanca</span></li>
-            <li><span>Highest Peak</span><span>Jebel Toubkal 4,167 m</span></li>
-            <li><span>Administrative Regions</span><span>12</span></li>
-          </ul>
-        </section>
-
-      </aside>
-
-      <div id="map-wrap">
-        <div id="map"></div>
-
-        <div id="tooltip" class="tooltip hidden" aria-hidden="true"></div>
-
-        <div id="loading" class="loading-overlay">
-          <div class="spinner"></div>
-          <p>Generating grid…</p>
-        </div>
-      </div>
-
-    </div>
+<!-- ───── TOP BAR ───── -->
+<header class="topbar">
+  <div class="brand">
+    <svg viewBox="0 0 28 28" width="22" height="22" aria-hidden="true">
+      <rect x="2" y="2" width="24" height="24" rx="4" fill="none" stroke="#0D9488" stroke-width="1.5" opacity=".7"/>
+      <path d="M6 21V9l4 5 4-9 4 9 4-5v12" fill="none" stroke="#0D9488" stroke-width="1.7" stroke-linejoin="round"/>
+      <line x1="6" y1="17" x2="22" y2="17" stroke="#e5e4e0" stroke-width="0.5" opacity=".5"/>
+      <line x1="6" y1="20" x2="22" y2="20" stroke="#e5e4e0" stroke-width="0.5" opacity=".5"/>
+    </svg>
+    <span class="brand-text">
+      <strong>Energy × Digital Nexus</strong>
+      <small>Morocco Infrastructure Map · v1.0</small>
+    </span>
   </div>
 
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="data.js"></script>
-  <script src="app.js"></script>
+  <div class="country-switch">
+    <label for="countrySelect">Country</label>
+    <select id="countrySelect" aria-label="Country"></select>
+  </div>
+
+  <div class="spacer"></div>
+
+  <button id="methodologyBtn" class="ghost-btn" title="Methodology">
+    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+    Methodology
+  </button>
+  <a id="githubLink" href="#" target="_blank" rel="noopener" class="ghost-btn" title="GitHub">
+    <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M12 .5C5.73.5.67 5.56.67 11.83c0 5.02 3.25 9.27 7.76 10.77.57.1.78-.25.78-.55 0-.27-.01-1.16-.02-2.11-3.16.69-3.83-1.35-3.83-1.35-.52-1.31-1.27-1.66-1.27-1.66-1.04-.71.08-.7.08-.7 1.15.08 1.75 1.18 1.75 1.18 1.02 1.74 2.67 1.24 3.32.95.1-.74.4-1.24.73-1.53-2.52-.29-5.17-1.26-5.17-5.6 0-1.24.45-2.25 1.18-3.04-.12-.29-.51-1.45.11-3.02 0 0 .96-.31 3.14 1.16.91-.25 1.89-.38 2.86-.39.97 0 1.95.13 2.86.39 2.18-1.47 3.13-1.16 3.13-1.16.63 1.57.23 2.73.12 3.02.73.79 1.18 1.8 1.18 3.04 0 4.35-2.66 5.31-5.19 5.59.41.35.77 1.03.77 2.08 0 1.5-.01 2.71-.01 3.08 0 .3.2.65.79.54 4.51-1.5 7.75-5.75 7.75-10.76C23.33 5.56 18.27.5 12 .5z"/></svg>
+    GitHub
+  </a>
+  <button id="themeToggle" class="icon-btn" title="Toggle theme">
+    <svg id="themeIcon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+  </button>
+</header>
+
+<!-- ───── MAIN ───── -->
+<main class="layout">
+
+  <!-- Left panel -->
+  <aside class="panel" id="panel" aria-label="Layers and methodology">
+    <button class="panel-collapse" id="panelCollapse" aria-label="Collapse panel" title="Collapse panel">
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+
+    <section class="panel-section">
+      <h2 class="panel-title">Layers</h2>
+      <div id="layerList" class="layer-list"></div>
+    </section>
+
+    <section class="panel-section">
+      <div class="panel-subhead">
+        <h3>Snapshot</h3>
+        <span class="micro">source: ONEE 2025</span>
+      </div>
+      <div class="kpi-grid" id="kpiGrid"></div>
+    </section>
+
+    <section class="panel-section" id="providerLegendSection">
+      <div class="panel-subhead">
+        <h3>Data-center providers</h3>
+      </div>
+      <div class="provider-legend" id="providerLegend"></div>
+      <p class="micro" style="margin-top:8px;color:var(--text-3)">Bubble size ∝ announced capacity. Paler fill = announced / under construction.</p>
+    </section>
+
+    <section class="panel-section">
+      <details class="disclosure">
+        <summary>About this tool</summary>
+        <p>An open, transparent map of Morocco's electricity and digital infrastructure — built for researchers, developers and policy teams who need a single view of where power is produced, moved and consumed, and where the data-center pipeline is landing.</p>
+        <p>Every feature carries a <code>source</code> and a source URL. Nothing here is proprietary.</p>
+      </details>
+
+      <details class="disclosure">
+        <summary>Methodology</summary>
+        <p>Data is hand-curated from Global Energy Monitor, ONEE, OpenStreetMap, Datacentermap.com and operator disclosures. Each GeoJSON feature includes a <code>precision</code> flag (<em>exact</em> or <em>approximate</em>), a <code>source</code>, and the <code>commissioning_year</code> or announcement year.</p>
+        <p>Transmission-line routing is indicative, traced from ONEE network maps and OSM — <strong>not survey-grade</strong>. Industrial demand figures are public-source estimates, not audited.</p>
+        <p>Inspired by <a href="https://paczyzak.substack.com/p/data-centers" target="_blank" rel="noopener">Pawel Czyzak's Data Center Siting Tool</a> (transparency-first) and <a href="https://www.enersite.app/" target="_blank" rel="noopener">enersite.app</a> (multi-layer spatial analysis).</p>
+      </details>
+
+      <details class="disclosure">
+        <summary>Known data gaps (v1.0)</summary>
+        <ul class="bullets">
+          <li>No sub-60 kV distribution network.</li>
+          <li>Transmission lines are approximate corridors, not survey-grade.</li>
+          <li>Industrial demand is estimated from public disclosures.</li>
+          <li>Renewable-potential layer (solar/wind irradiation) deferred to v1.1.</li>
+          <li>No live data feeds — everything is static GeoJSON.</li>
+        </ul>
+      </details>
+    </section>
+
+    <section class="panel-section panel-footer">
+      <a href="mailto:reda.tahiri@example.com?subject=MoroccoMap%20data%20correction">
+        <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 4h16v16H4z"/><polyline points="22 6 12 13 2 6"/></svg>
+        Report a data error
+      </a>
+      <a id="githubContribute" href="#" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M12 .5C5.73.5.67 5.56.67 11.83c0 5.02 3.25 9.27 7.76 10.77.57.1.78-.25.78-.55 0-.27-.01-1.16-.02-2.11-3.16.69-3.83-1.35-3.83-1.35-.52-1.31-1.27-1.66-1.27-1.66-1.04-.71.08-.7.08-.7 1.15.08 1.75 1.18 1.75 1.18 1.02 1.74 2.67 1.24 3.32.95.1-.74.4-1.24.73-1.53-2.52-.29-5.17-1.26-5.17-5.6 0-1.24.45-2.25 1.18-3.04-.12-.29-.51-1.45.11-3.02 0 0 .96-.31 3.14 1.16.91-.25 1.89-.38 2.86-.39.97 0 1.95.13 2.86.39 2.18-1.47 3.13-1.16 3.13-1.16.63 1.57.23 2.73.12 3.02.73.79 1.18 1.8 1.18 3.04 0 4.35-2.66 5.31-5.19 5.59.41.35.77 1.03.77 2.08 0 1.5-.01 2.71-.01 3.08 0 .3.2.65.79.54 4.51-1.5 7.75-5.75 7.75-10.76C23.33 5.56 18.27.5 12 .5z"/></svg>
+        Contribute on GitHub
+      </a>
+    </section>
+  </aside>
+
+  <button class="panel-expand" id="panelExpand" aria-label="Expand panel" title="Expand panel">
+    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+  </button>
+
+  <!-- Map -->
+  <div class="map-wrap">
+    <div id="map"></div>
+
+    <!-- Map init error (rare — CARTO tiles are public) -->
+    <div id="noTokenCard" class="no-token hidden">
+      <div class="no-token-inner">
+        <h2>Map engine unavailable</h2>
+        <p>The map could not initialise. This is almost always a transient network issue — reload to retry. If it persists, the basemap provider (CARTO) may be unreachable from your network.</p>
+        <p class="micro">No account or token required — this map uses open tiles from <a href="https://carto.com/basemaps" target="_blank" rel="noopener">CARTO</a> + <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> via MapLibre.</p>
+      </div>
+    </div>
+
+    <!-- Hover tooltip -->
+    <div id="tooltip" class="tooltip" style="display:none"></div>
+
+    <!-- Popup card -->
+    <aside id="popup" class="popup" aria-hidden="true">
+      <header class="popup-header">
+        <div id="popupBadge"></div>
+        <button id="popupClose" class="icon-btn small" aria-label="Close">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </header>
+      <div id="popupBody" class="popup-body"></div>
+    </aside>
+  </div>
+
+</main>
+
+<!-- ───── BOTTOM BAR ───── -->
+<footer class="bottombar">
+  <div class="bb-left">
+    <span class="bb-dot" style="background:#F59E0B"></span>
+    <span class="bb-dot" style="background:#0D9488"></span>
+    <span class="bb-dot" style="background:#3B82F6"></span>
+    <span class="bb-dot" style="background:#EA580C"></span>
+    <span class="bb-dot" style="background:#7C3AED"></span>
+    <span>Data: GEM · Datacentermap · Grid: <a href="https://openinframap.org" target="_blank" rel="noopener">OpenInfraMap</a> (ODbL) · Basemap: MapLibre | © <a href="https://carto.com/attributions" target="_blank" rel="noopener">CARTO</a>, © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors</span>
+  </div>
+  <div class="bb-center">
+    Not affiliated with any entity. Built by <a href="https://paczyzak.substack.com/p/data-centers" target="_blank" rel="noopener">Reda Tahiri — Energy × Digital Nexus</a>.
+  </div>
+  <div class="bb-right">
+    <a id="githubFooter" href="#" target="_blank" rel="noopener">Contribute data ↗</a>
+  </div>
+</footer>
+
+<!-- Methodology modal -->
+<div id="methodologyModal" class="modal hidden" role="dialog" aria-modal="true">
+  <div class="modal-card">
+    <header>
+      <h2>Methodology</h2>
+      <button class="icon-btn" id="methodologyClose" aria-label="Close"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </header>
+    <div class="modal-body">
+      <p>Every layer on this map is a static GeoJSON under <code>/docs/data/morocco/</code>. Features include <code>source</code>, <code>source_url</code>, and <code>precision</code> so provenance is inspectable from the tooltip.</p>
+      <h3>Sources by layer</h3>
+      <ul id="methodologySources"></ul>
+      <h3>Limits</h3>
+      <ul class="bullets">
+        <li>Transmission-line routing is indicative, not survey-grade.</li>
+        <li>Capacity factors are not applied — figures are nameplate.</li>
+        <li>Industrial demand is estimated from public disclosures.</li>
+        <li>Announced DC capacity is the headline, not energised capacity.</li>
+      </ul>
+      <p class="micro">See <a href="../DATA_SOURCES.md" target="_blank">DATA_SOURCES.md</a> and <a href="../ASSUMPTIONS.md" target="_blank">ASSUMPTIONS.md</a> for the full write-up.</p>
+    </div>
+  </div>
+</div>
+
+<script src="./countries.config.js"></script>
+<script src="./app.js"></script>
 </body>
 </html>

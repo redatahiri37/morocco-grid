@@ -1,0 +1,284 @@
+{
+  "type": "FeatureCollection",
+  "metadata": {
+    "country": "Morocco",
+    "layer": "industrial",
+    "compiled": "2026-04-17",
+    "notes": "Large electricity-intensive industrial sites. Demand figures are public-source estimates, not audited. See DATA_SOURCES.md."
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -8.63,
+          33.11
+        ]
+      },
+      "properties": {
+        "id": "ocp-jorf-lasfar",
+        "name": "OCP Jorf Lasfar",
+        "sector": "phosphates / fertilisers",
+        "estimated_demand_mw": 220,
+        "grid_connection": "400 kV Jorf Lasfar substation",
+        "status": "operational",
+        "precision": "exact",
+        "source": "OCP annual report · GEM",
+        "source_url": "https://www.ocpgroup.ma/en"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -6.91,
+          32.89
+        ]
+      },
+      "properties": {
+        "id": "ocp-khouribga",
+        "name": "OCP Khouribga Mining & Beneficiation",
+        "sector": "phosphate mining",
+        "estimated_demand_mw": 180,
+        "grid_connection": "225 kV Khouribga",
+        "status": "operational",
+        "precision": "approximate",
+        "source": "OCP annual report",
+        "source_url": "https://www.ocpgroup.ma/en/activities/mining"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -9.24,
+          32.3
+        ]
+      },
+      "properties": {
+        "id": "ocp-safi",
+        "name": "OCP Safi Chemical Platform",
+        "sector": "phosphates / fertilisers",
+        "estimated_demand_mw": 110,
+        "grid_connection": "225 kV Safi",
+        "status": "operational",
+        "precision": "approximate",
+        "source": "OCP",
+        "source_url": "https://www.ocpgroup.ma/en"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -7.95,
+          32.24
+        ]
+      },
+      "properties": {
+        "id": "ocp-benguerir",
+        "name": "OCP Benguerir Mine",
+        "sector": "phosphate mining",
+        "estimated_demand_mw": 70,
+        "grid_connection": "225 kV regional",
+        "status": "operational",
+        "precision": "approximate",
+        "source": "OCP",
+        "source_url": "https://www.ocpgroup.ma/en"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -7.48,
+          33.44
+        ]
+      },
+      "properties": {
+        "id": "holcim-bouskoura",
+        "name": "Holcim Bouskoura Cement Plant",
+        "sector": "cement",
+        "estimated_demand_mw": 55,
+        "grid_connection": "60 kV Bouskoura",
+        "status": "operational",
+        "precision": "approximate",
+        "source": "Holcim Morocco disclosures",
+        "source_url": "https://www.lafargeholcim.ma/"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -4.98,
+          34.02
+        ]
+      },
+      "properties": {
+        "id": "holcim-fes",
+        "name": "Holcim Fès Cement Plant",
+        "sector": "cement",
+        "estimated_demand_mw": 40,
+        "grid_connection": "60 kV Fès",
+        "status": "operational",
+        "precision": "approximate",
+        "source": "Holcim Morocco",
+        "source_url": "https://www.lafargeholcim.ma/"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -8.62,
+          33.08
+        ]
+      },
+      "properties": {
+        "id": "sonasid-jorf",
+        "name": "SONASID Jorf Lasfar Rolling Mill",
+        "sector": "steel",
+        "estimated_demand_mw": 90,
+        "grid_connection": "225 kV Jorf Lasfar",
+        "status": "operational",
+        "precision": "exact",
+        "source": "SONASID annual report",
+        "source_url": "https://www.sonasid.ma/"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -2.93,
+          35.17
+        ]
+      },
+      "properties": {
+        "id": "sonasid-nador",
+        "name": "SONASID Nador Electric-Arc Furnace",
+        "sector": "steel",
+        "estimated_demand_mw": 60,
+        "grid_connection": "225 kV Nador",
+        "status": "operational",
+        "precision": "approximate",
+        "source": "SONASID",
+        "source_url": "https://www.sonasid.ma/"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -8.62,
+          33.09
+        ]
+      },
+      "properties": {
+        "id": "maghreb-steel-jorf",
+        "name": "Maghreb Steel — Jorf Lasfar",
+        "sector": "steel",
+        "estimated_demand_mw": 70,
+        "grid_connection": "225 kV Jorf Lasfar",
+        "status": "operational",
+        "precision": "approximate",
+        "source": "company disclosures",
+        "source_url": "https://www.maghrebsteel.ma/"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -5.469,
+          35.784
+        ]
+      },
+      "properties": {
+        "id": "renault-tangier",
+        "name": "Renault Tangier Plant",
+        "sector": "automotive",
+        "estimated_demand_mw": 35,
+        "grid_connection": "60 kV Tanger-Med free-zone",
+        "status": "operational",
+        "precision": "exact",
+        "source": "Renault press",
+        "source_url": "https://www.media.renault.com/"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -6.617,
+          34.22
+        ]
+      },
+      "properties": {
+        "id": "stellantis-kenitra",
+        "name": "Stellantis Kenitra Plant",
+        "sector": "automotive",
+        "estimated_demand_mw": 30,
+        "grid_connection": "60 kV Kénitra",
+        "status": "operational",
+        "precision": "approximate",
+        "source": "Stellantis press",
+        "source_url": "https://www.stellantis.com/"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -7.35,
+          33.7
+        ]
+      },
+      "properties": {
+        "id": "samir-mohammedia",
+        "name": "SAMIR Refinery (Mohammedia)",
+        "sector": "oil refining",
+        "estimated_demand_mw": 80,
+        "grid_connection": "225 kV Mohammedia",
+        "status": "idle",
+        "precision": "exact",
+        "source": "company filings",
+        "source_url": "https://www.samir.ma/"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -8.022,
+          31.394
+        ]
+      },
+      "properties": {
+        "id": "managem-guemassa",
+        "name": "Managem — Guemassa Polymetallic Complex",
+        "sector": "mining / metallurgy",
+        "estimated_demand_mw": 45,
+        "grid_connection": "60 kV Marrakech region",
+        "status": "operational",
+        "precision": "approximate",
+        "source": "Managem",
+        "source_url": "https://www.managemgroup.com/"
+      }
+    }
+  ]
+}

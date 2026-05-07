@@ -1,0 +1,92 @@
+{
+  "type": "FeatureCollection",
+  "metadata": {
+    "notes": "Operational and idle cross-border interconnectors, editorial overlay on OpenInfraMap."
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "interconnector-es-ma-1",
+        "name": "Spain–Morocco Interconnector I (Tarifa–Fardioua)",
+        "voltage_kv": 400,
+        "status": "operational",
+        "precision": "approximate",
+        "kind": "interconnector_ac_submarine",
+        "capacity_mw": 700,
+        "commissioning_year": 1997,
+        "source": "REE · ONEE · entso-e",
+        "source_url": "https://www.ree.es/en/activities/operation-of-the-electricity-system/international-interconnections"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -5.605,
+            36.012
+          ],
+          [
+            -5.495,
+            35.905
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "interconnector-es-ma-2",
+        "name": "Spain–Morocco Interconnector II (Tarifa–Fardioua)",
+        "voltage_kv": 400,
+        "status": "operational",
+        "precision": "approximate",
+        "kind": "interconnector_ac_submarine",
+        "capacity_mw": 700,
+        "commissioning_year": 2006,
+        "source": "REE · ONEE · entso-e",
+        "source_url": "https://www.ree.es/en/activities/operation-of-the-electricity-system/international-interconnections"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -5.612,
+            36.016
+          ],
+          [
+            -5.502,
+            35.909
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "interconnector-dz-ma-1",
+        "name": "Algeria–Morocco Interconnector (Oujda–Ghazaouet) — idle since 2021",
+        "voltage_kv": 400,
+        "status": "idle",
+        "precision": "approximate",
+        "kind": "interconnector_ac",
+        "capacity_mw": 1200,
+        "commissioning_year": 1988,
+        "source": "Sonelgaz · ONEE",
+        "source_url": "https://www.mem.gov.ma/"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -1.92,
+            34.69
+          ],
+          [
+            -1.86,
+            35.1
+          ]
+        ]
+      }
+    }
+  ]
+}
