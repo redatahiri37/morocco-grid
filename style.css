@@ -1,5 +1,5 @@
 /* =========================================================
-   Energy × Digital Nexus — Morocco Infrastructure Map v1.0
+   Energy × Digital Nexus — Morocco Infrastructure Map v1.6
    Palette is prescribed by the spec. Do not invent new hues.
    ========================================================= */
 
@@ -546,4 +546,75 @@ code{font-family:var(--font-mono);font-size:11px;background:var(--bg-2);padding:
   .topbar{gap:8px;padding:0 8px}
   .ghost-btn span,.ghost-btn{font-size:11px}
   .kpi-grid{grid-template-columns:1fr}
+}
+
+/* =========================================================
+   Orientation & framing copy
+   Reuses prescribed palette tokens only — no new hues.
+   ========================================================= */
+
+/* Intro — sits above the layer list */
+.intro-section{padding-top:4px}
+.intro-head{
+  font-size:13.5px;line-height:1.35;font-weight:600;
+  color:var(--text-0);letter-spacing:-.01em;margin-bottom:6px;
+}
+.intro-body{
+  font-size:11.5px;line-height:1.55;color:var(--text-1);
+}
+
+/* Status caveat — sits below the KPI cards */
+.status-note{
+  margin-top:10px;padding:9px 11px;
+  background:var(--bg-2);
+  border:1px solid var(--border);
+  border-left:2px solid var(--c-wind);
+  border-radius:4px;
+}
+.status-note-head{
+  font-size:11px;font-weight:600;color:var(--text-0);
+  line-height:1.35;margin-bottom:4px;
+}
+.status-note-body{
+  font-size:10.5px;line-height:1.5;color:var(--text-2);
+}
+
+/* Orientation card — floats over the map, dismissible */
+.start-card{
+  position:absolute;top:14px;left:14px;z-index:5;
+  width:290px;padding:13px 15px 14px;
+  background:var(--bg-1);
+  border:1px solid var(--border-hi);
+  border-radius:6px;
+  box-shadow:0 8px 28px rgba(0,0,0,.4);
+  animation:startIn .45s var(--ease) both;
+}
+[data-theme="light"] .start-card{box-shadow:0 8px 28px rgba(0,0,0,.14)}
+.start-card.is-hidden{display:none}
+
+@keyframes startIn{
+  from{opacity:0;transform:translateY(-6px)}
+  to{opacity:1;transform:none}
+}
+@media (prefers-reduced-motion:reduce){
+  .start-card{animation:none}
+}
+
+.start-head{
+  font-size:12.5px;font-weight:600;color:var(--text-0);
+  margin-bottom:5px;padding-right:18px;letter-spacing:-.01em;
+}
+.start-body{
+  font-size:11px;line-height:1.55;color:var(--text-1);
+}
+.start-dismiss{
+  position:absolute;top:9px;right:9px;
+  width:20px;height:20px;display:grid;place-items:center;
+  background:none;border:0;border-radius:3px;cursor:pointer;
+  color:var(--text-3);transition:color .15s,background .15s;
+}
+.start-dismiss:hover{color:var(--text-0);background:var(--bg-3)}
+
+@media (max-width:720px){
+  .start-card{width:auto;left:10px;right:10px;top:10px}
 }

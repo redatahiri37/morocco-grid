@@ -44,7 +44,7 @@
   const OIM_ATTR  = '<a href="https://openinframap.org" target="_blank">OpenInfraMap</a> (ODbL)';
   const COUNTRIES = window.COUNTRIES || {};
   const ENABLED   = (window.COUNTRIES_ENABLED || ["morocco"]).filter(k=>COUNTRIES[k]);
-  const REPO_URL  = "https://github.com/redatahiri37/morocco-energy-digital-map";
+  const REPO_URL  = "https://github.com/redatahiri37/morocco-grid";
 
   const FUEL_COLOR = {
     solar:"#F59E0B", wind:"#0D9488", hydro:"#3B82F6",
@@ -152,6 +152,22 @@
   $("#panelExpand").addEventListener("click",   ()=>layout.classList.remove("panel-collapsed"));
 
   ["githubLink","githubContribute","githubFooter"].forEach(id=>{ const el = $("#"+id); if(el) el.href = REPO_URL; });
+
+  // ---------- Orientation card ----------
+  // Dismissal is a per-browser convenience only; storage can throw in
+  // private windows or when site data is blocked, so every access is guarded.
+  (function initStartCard(){
+    const card = $("#startCard"), btn = $("#startDismiss");
+    if(!card || !btn) return;
+    const KEY = "mgx.startCard.dismissed";
+    let dismissed = false;
+    try { dismissed = localStorage.getItem(KEY) === "1"; } catch(_){}
+    if(dismissed) card.classList.add("is-hidden");
+    btn.addEventListener("click", ()=>{
+      card.classList.add("is-hidden");
+      try { localStorage.setItem(KEY, "1"); } catch(_){}
+    });
+  })();
 
   // ---------- Methodology modal ----------
   const methModal = $("#methodologyModal");
