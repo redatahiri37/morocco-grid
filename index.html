@@ -101,7 +101,7 @@
       <details class="disclosure">
         <summary>About this tool</summary>
         <p>An open, transparent map of Morocco's electricity and digital infrastructure — built for researchers, developers and policy teams who need a single view of where power is produced, moved and consumed, and where the data-center pipeline is landing.</p>
-        <p>Every feature carries a <code>source</code>. Nothing here is proprietary. Source <em>URLs</em> are complete for the interconnector, planned-corridor, industrial and digital layers; the power-generation and national-HV layers currently cite the source by name only — see Known data gaps.</p>
+        <p>Every feature carries a <code>source</code>, and every layer but one also carries a per-feature source <em>URL</em>. Nothing here is proprietary. The exception is power generation, whose 42 features cite twelve different sources and need per-feature URLs — see Known data gaps.</p>
       </details>
 
       <details class="disclosure">
@@ -124,7 +124,7 @@
     </section>
 
     <section class="panel-section panel-footer">
-      <a href="mailto:reda.tahiri@example.com?subject=MoroccoMap%20data%20correction">
+      <a href="mailto:reda.tahiri1@gmail.com?subject=MoroccoMap%20data%20correction">
         <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 4h16v16H4z"/><polyline points="22 6 12 13 2 6"/></svg>
         Report a data error
       </a>
@@ -204,7 +204,7 @@
       <button class="icon-btn" id="methodologyClose" aria-label="Close"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
     </header>
     <div class="modal-body">
-      <p>Every layer on this map is a static GeoJSON under <code>./data/morocco/</code>. Features carry a <code>source</code> so provenance is inspectable from the tooltip. Most layers add <code>source_url</code> and <code>precision</code>; the national-HV layer instead records <code>coord_method</code> and <code>coord_confidence</code>, and the power-generation layer has <code>source_url</code> unpopulated. Both are listed under Limits.</p>
+      <p>Every layer on this map is a static GeoJSON under <code>./data/morocco/</code>. Features carry a <code>source</code> and a <code>source_url</code> so provenance is inspectable from the tooltip, with one exception: the power-generation layer has <code>source_url</code> unpopulated, because its 42 features cite twelve different sources. The national-HV layer records <code>coord_method</code> and <code>coord_confidence</code> in place of <code>precision</code>. Both are listed under Limits.</p>
       <h3>Sources by layer</h3>
       <ul id="methodologySources"></ul>
       <h3>Limits</h3>
