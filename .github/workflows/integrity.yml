@@ -1,0 +1,57 @@
+name: integrity
+
+# The repository previously had no CI at all. That was the deepest cause of
+# the defects recorded in ENGINEERING.md: every invariant was maintained by
+# hand across four files and nothing executed to check any of them.
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  integrity:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Syntax check shipped JavaScript
+        run: |
+          node --check app.js
+          node --check countries.config.js
+
+      - name: Validate GeoJSON parses
+        run: |
+          for f in data/*/*.geojson; do
+            node -e "JSON.parse(require('fs').readFileSync('$f','utf8'))" \
+              || { echo "::error file=$f::invalid JSON"; exit 1; }
+          done
+
+      - name: Repository invariants
+        run: node scripts/validate-integrity.mjs
+
+      # Guards the guard: proves each rule still fires when its defect is
+      # reintroduced, so a check cannot be quietly weakened.
+      - name: Validator mutation tests
+        run: node scripts/test-validator.mjs
+
+      - name: Agenda for the next council meeting
+        if: always()
+        run: |
+          {
+            echo "## Standing agenda — deliberate exceptions"
+            echo
+            echo "Generated from \`validate-integrity.mjs\`, so it is current by construction."
+            echo "Review each: is the reason still true? has the number moved?"
+            echo
+            echo '```'
+            node scripts/validate-integrity.mjs 2>&1 | grep -E '^\s+note' || echo "  (no open exceptions)"
+            echo '```'
+            echo
+            echo "See [ENGINEERING.md](../blob/${GITHUB_SHA}/ENGINEERING.md) for the root-cause classes."
+          } >> "$GITHUB_STEP_SUMMARY"
