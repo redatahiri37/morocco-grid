@@ -1,0 +1,12 @@
+{
+  "name": "morocco-grid-audit",
+  "private": true,
+  "description": "Executable reproducers for the findings in ../AUDIT.md",
+  "scripts": {
+    "all": "for f in f*.js; do echo \"\\n===== $f =====\"; node $f || echo \"($f exited non-zero)\"; done"
+  },
+  "dependencies": {
+    "maplibre-gl": "4.7.1",
+    "playwright": "1.49.0"
+  }
+}
