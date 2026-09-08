@@ -44,7 +44,7 @@
   const OIM_ATTR  = '<a href="https://openinframap.org" target="_blank">OpenInfraMap</a> (ODbL)';
   const COUNTRIES = window.COUNTRIES || {};
   const ENABLED   = (window.COUNTRIES_ENABLED || ["morocco"]).filter(k=>COUNTRIES[k]);
-  const REPO_URL  = "https://github.com/redatahiri37/morocco-energy-digital-map";
+  const REPO_URL  = "https://github.com/redatahiri37/morocco-grid";
 
   const FUEL_COLOR = {
     solar:"#F59E0B", wind:"#0D9488", hydro:"#3B82F6",
@@ -80,7 +80,6 @@
     "oim-grid":"oim",
     "interconnectors":"grid",
     "planned-corridors":"grid",
-    "grid-lines":"grid",        // legacy fallback
     "national-hv":"national-grid",
     "industrial":"industrial",
     "digital":"digital"
@@ -152,6 +151,22 @@
   $("#panelExpand").addEventListener("click",   ()=>layout.classList.remove("panel-collapsed"));
 
   ["githubLink","githubContribute","githubFooter"].forEach(id=>{ const el = $("#"+id); if(el) el.href = REPO_URL; });
+
+  // ---------- Orientation card ----------
+  // Dismissal is a per-browser convenience only; storage can throw in
+  // private windows or when site data is blocked, so every access is guarded.
+  (function initStartCard(){
+    const card = $("#startCard"), btn = $("#startDismiss");
+    if(!card || !btn) return;
+    const KEY = "mgx.startCard.dismissed";
+    let dismissed = false;
+    try { dismissed = localStorage.getItem(KEY) === "1"; } catch(_){}
+    if(dismissed) card.classList.add("is-hidden");
+    btn.addEventListener("click", ()=>{
+      card.classList.add("is-hidden");
+      try { localStorage.setItem(KEY, "1"); } catch(_){}
+    });
+  })();
 
   // ---------- Methodology modal ----------
   const methModal = $("#methodologyModal");
@@ -828,11 +843,16 @@
       { id:"lyr-dig-cables",   src:"src-digital",  dataLayer:"digital" }
     ];
     const lineLayers = [
-      { id:"lyr-grid-hv",      src:"src-grid", dataLayer:"grid-lines" },
-      { id:"lyr-grid-mv",      src:"src-grid", dataLayer:"grid-lines" },
-      { id:"lyr-grid-lv",      src:"src-grid", dataLayer:"grid-lines" },
-      { id:"lyr-grid-planned", src:"src-grid", dataLayer:"grid-lines" },
-      { id:"lyr-grid-idle",    src:"src-grid", dataLayer:"grid-lines" }
+      { id:"lyr-grid-hv",      src:"src-grid" },
+      { id:"lyr-grid-mv",      src:"src-grid" },
+      { id:"lyr-grid-lv",      src:"src-grid" },
+      { id:"lyr-grid-planned", src:"src-grid" },
+      { id:"lyr-grid-idle",    src:"src-grid" },
+      // national-hv is the largest layer (947 lines) and was never wired
+      // for hover/click, so its features were inert on the map.
+      { id:"lyr-nhv-backbone",     src:"src-national-hv" },
+      { id:"lyr-nhv-regional",     src:"src-national-hv" },
+      { id:"lyr-nhv-distribution", src:"src-national-hv" }
     ];
 
     pointLayers.forEach(({id, src, dataLayer})=>{
@@ -856,7 +876,7 @@
       });
     });
 
-    lineLayers.forEach(({id, src, dataLayer})=>{
+    lineLayers.forEach(({id, src})=>{
       if(!map.getLayer(id)) return;
       map.on("mousemove", id, (e)=>{
         const f = e.features[0]; if(!f) return;
@@ -923,11 +943,20 @@
       </div>`;
     positionTooltip(point);
   }
+  // Line files disagree on the voltage field: the older editorial layers
+  // carry `voltage_kv` as a number (400), national-hv carries `voltage` as
+  // a formatted string ("400 kV"). Render either without printing "undefined".
+  function lineVoltage(p){
+    if(p.voltage_kv != null && p.voltage_kv !== "") return `${p.voltage_kv} kV`;
+    if(p.voltage) return String(p.voltage);
+    return "—";
+  }
+
   function showLineTooltip(f, point){
     const p = f.properties || {};
     tooltip.innerHTML = `
       <div class="tt-name">${escapeHtml(p.name)}</div>
-      <div class="tt-metric">${p.voltage_kv} kV · ${escapeHtml(p.status || "")}</div>
+      <div class="tt-metric">${escapeHtml(lineVoltage(p))} · ${escapeHtml(p.status || "")}</div>
       <div class="tt-meta">${p.source_url ? `<a href="${escapeHtml(p.source_url)}" target="_blank" rel="noopener">${escapeHtml(p.source || "—")}</a>` : escapeHtml(p.source || "—")}</div>`;
     positionTooltip(point);
   }
@@ -993,7 +1022,7 @@
         <pre class="raw-json">${escapeHtml(JSON.stringify(p, null, 2))}</pre>
       </details>
       <div class="pop-actions">
-        <a href="mailto:reda.tahiri@example.com?subject=${encodeURIComponent('MoroccoMap — correction: '+p.name)}&body=${encodeURIComponent('Feature id: '+p.id+'\n\nSuggested correction:\n')}">Report an error</a>
+        <a href="mailto:reda.tahiri1@gmail.com?subject=${encodeURIComponent('MoroccoMap — correction: '+p.name)}&body=${encodeURIComponent('Feature id: '+p.id+'\n\nSuggested correction:\n')}">Report an error</a>
         ${p.source_url ? `<a href="${escapeHtml(p.source_url)}" target="_blank" rel="noopener">Primary source ↗</a>` : ""}
       </div>`;
     popup.classList.add("open");
@@ -1005,12 +1034,12 @@
     $("#popupBadge").innerHTML = `<span class="badge grid"><span class="dot" style="background:${GRID_COLOR}"></span>Transmission line</span>`;
     $("#popupBody").innerHTML = `
       <h1 class="pop-title">${escapeHtml(p.name)}</h1>
-      <div class="pop-sub">${p.voltage_kv} kV</div>
+      <div class="pop-sub">${escapeHtml(lineVoltage(p))}</div>
       <span class="status-pill ${p.status || 'operational'}"><span class="dot"></span>${escapeHtml(p.status || "operational")}</span>
       <div class="stat-grid">
-        <div class="cell"><div class="k">Voltage</div><div class="v">${p.voltage_kv} kV</div></div>
-        <div class="cell"><div class="k">Status</div><div class="v" style="text-transform:capitalize">${escapeHtml(p.status)}</div></div>
-        <div class="cell"><div class="k">Precision</div><div class="v" style="text-transform:capitalize">${escapeHtml(p.precision || "approximate")}</div></div>
+        <div class="cell"><div class="k">Voltage</div><div class="v">${escapeHtml(lineVoltage(p))}</div></div>
+        <div class="cell"><div class="k">Status</div><div class="v" style="text-transform:capitalize">${escapeHtml(p.status || "—")}</div></div>
+        <div class="cell"><div class="k">Precision</div><div class="v" style="text-transform:capitalize">${escapeHtml(p.precision || p.coord_confidence || "approximate")}</div></div>
         <div class="cell"><div class="k">Kind</div><div class="v">${p.kind === "hvdc_planned" ? "HVDC (planned)" : "AC"}</div></div>
       </div>
       <div class="source-row">
@@ -1022,7 +1051,7 @@
         <pre class="raw-json">${escapeHtml(JSON.stringify(p, null, 2))}</pre>
       </details>
       <div class="pop-actions">
-        <a href="mailto:reda.tahiri@example.com?subject=${encodeURIComponent('MoroccoMap — correction: '+p.name)}">Report an error</a>
+        <a href="mailto:reda.tahiri1@gmail.com?subject=${encodeURIComponent('MoroccoMap — correction: '+p.name)}">Report an error</a>
       </div>`;
     popup.classList.add("open");
     popup.setAttribute("aria-hidden","false");

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Energy × Digital Nexus — Morocco Infrastructure Map</title>
 
-<meta name="description" content="Interactive multi-layer map of Morocco's power generation, transmission grid, industrial load and data-center pipeline. v1.0 of a platform scaling to MENA.">
+<meta name="description" content="Interactive multi-layer map of Morocco's power generation, transmission grid, industrial load and data-center pipeline. v1.6 of a platform scaling to MENA.">
 <meta name="author" content="Reda Tahiri">
 <meta property="og:title" content="Energy × Digital Nexus — Morocco Infrastructure Map">
 <meta property="og:description" content="Power, grid, industry and data centers — on one transparent map.">
@@ -33,7 +33,7 @@
     </svg>
     <span class="brand-text">
       <strong>Energy × Digital Nexus</strong>
-      <small>Morocco Infrastructure Map · v1.0</small>
+      <small>Morocco Infrastructure Map · v1.6</small>
     </span>
   </div>
 
@@ -66,6 +66,11 @@
       <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
     </button>
 
+    <section class="panel-section intro-section">
+      <h2 class="intro-head">Find where Morocco's power system and digital economy meet.</h2>
+      <p class="intro-body">Explore generation, transmission, industrial demand and data-centre projects in one map. Click any feature to see its status, metrics and original source.</p>
+    </section>
+
     <section class="panel-section">
       <h2 class="panel-title">Layers</h2>
       <div id="layerList" class="layer-list"></div>
@@ -74,9 +79,14 @@
     <section class="panel-section">
       <div class="panel-subhead">
         <h3>Snapshot</h3>
-        <span class="micro">source: ONEE 2025</span>
+        <span class="micro">source: ONEE · GEM · updated 2026-05</span>
       </div>
       <div class="kpi-grid" id="kpiGrid"></div>
+
+      <aside class="status-note">
+        <h4 class="status-note-head">Read the status before the headline.</h4>
+        <p class="status-note-body">Operational assets, projects under construction and announced projects are distinct. Pipeline capacity is not available grid capacity.</p>
+      </aside>
     </section>
 
     <section class="panel-section" id="providerLegendSection">
@@ -91,7 +101,7 @@
       <details class="disclosure">
         <summary>About this tool</summary>
         <p>An open, transparent map of Morocco's electricity and digital infrastructure — built for researchers, developers and policy teams who need a single view of where power is produced, moved and consumed, and where the data-center pipeline is landing.</p>
-        <p>Every feature carries a <code>source</code> and a source URL. Nothing here is proprietary.</p>
+        <p>Every feature carries a <code>source</code>, and every layer but one also carries a per-feature source <em>URL</em>. Nothing here is proprietary. The exception is power generation, whose 42 features cite twelve different sources and need per-feature URLs — see Known data gaps.</p>
       </details>
 
       <details class="disclosure">
@@ -102,19 +112,19 @@
       </details>
 
       <details class="disclosure">
-        <summary>Known data gaps (v1.0)</summary>
+        <summary>Known data gaps (v1.6)</summary>
         <ul class="bullets">
           <li>No sub-60 kV distribution network.</li>
           <li>Transmission lines are approximate corridors, not survey-grade.</li>
           <li>Industrial demand is estimated from public disclosures.</li>
-          <li>Renewable-potential layer (solar/wind irradiation) deferred to v1.1.</li>
+          <li>Renewable-potential layer (solar/wind irradiation) not yet included.</li>
           <li>No live data feeds — everything is static GeoJSON.</li>
         </ul>
       </details>
     </section>
 
     <section class="panel-section panel-footer">
-      <a href="mailto:reda.tahiri@example.com?subject=MoroccoMap%20data%20correction">
+      <a href="mailto:reda.tahiri1@gmail.com?subject=MoroccoMap%20data%20correction">
         <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 4h16v16H4z"/><polyline points="22 6 12 13 2 6"/></svg>
         Report a data error
       </a>
@@ -132,6 +142,15 @@
   <!-- Map -->
   <div class="map-wrap">
     <div id="map"></div>
+
+    <!-- Orientation card — dismissible, remembered per browser -->
+    <aside id="startCard" class="start-card">
+      <button id="startDismiss" class="start-dismiss" aria-label="Dismiss">
+        <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+      <h4 class="start-head">Start with a place.</h4>
+      <p class="start-body">Click a site or area to understand nearby generation, grid infrastructure, industrial demand and digital connectivity. Use this map to identify locations worth investigating—not to replace technical due diligence.</p>
+    </aside>
 
     <!-- Map init error (rare — CARTO tiles are public) -->
     <div id="noTokenCard" class="no-token hidden">
@@ -170,7 +189,7 @@
     <span>Data: GEM · Datacentermap · Grid: <a href="https://openinframap.org" target="_blank" rel="noopener">OpenInfraMap</a> (ODbL) · Basemap: MapLibre | © <a href="https://carto.com/attributions" target="_blank" rel="noopener">CARTO</a>, © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors</span>
   </div>
   <div class="bb-center">
-    Not affiliated with any entity. Built by <a href="https://paczyzak.substack.com/p/data-centers" target="_blank" rel="noopener">Reda Tahiri — Energy × Digital Nexus</a>.
+    Not affiliated with any entity. Built by <a href="https://redatahiri.substack.com/?utm_campaign=profile_chips" target="_blank" rel="noopener">Reda Tahiri — Energy × Digital Nexus</a>.
   </div>
   <div class="bb-right">
     <a id="githubFooter" href="#" target="_blank" rel="noopener">Contribute data ↗</a>
@@ -185,7 +204,7 @@
       <button class="icon-btn" id="methodologyClose" aria-label="Close"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
     </header>
     <div class="modal-body">
-      <p>Every layer on this map is a static GeoJSON under <code>/docs/data/morocco/</code>. Features include <code>source</code>, <code>source_url</code>, and <code>precision</code> so provenance is inspectable from the tooltip.</p>
+      <p>Every layer on this map is a static GeoJSON under <code>./data/morocco/</code>. Features carry a <code>source</code> and a <code>source_url</code> so provenance is inspectable from the tooltip, with one exception: the power-generation layer has <code>source_url</code> unpopulated, because its 42 features cite twelve different sources. The national-HV layer records <code>coord_method</code> and <code>coord_confidence</code> in place of <code>precision</code>. Both are listed under Limits.</p>
       <h3>Sources by layer</h3>
       <ul id="methodologySources"></ul>
       <h3>Limits</h3>
@@ -194,8 +213,10 @@
         <li>Capacity factors are not applied — figures are nameplate.</li>
         <li>Industrial demand is estimated from public disclosures.</li>
         <li>Announced DC capacity is the headline, not energised capacity.</li>
+        <li>Power-generation features cite a named source but no source URL.</li>
+        <li>National-HV features use <code>coord_method</code> / <code>coord_confidence</code> rather than <code>precision</code>.</li>
       </ul>
-      <p class="micro">See <a href="../DATA_SOURCES.md" target="_blank">DATA_SOURCES.md</a> and <a href="../ASSUMPTIONS.md" target="_blank">ASSUMPTIONS.md</a> for the full write-up.</p>
+      <p class="micro">Per-layer sources are listed above and on every feature tooltip.</p>
     </div>
   </div>
 </div>
