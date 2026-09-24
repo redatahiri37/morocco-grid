@@ -3,20 +3,103 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Energy × Digital Nexus — Morocco Infrastructure Map</title>
+<title>Morocco Electricity Grid &amp; Data Center Map — Power Plants, Transmission Lines | Energy × Digital Nexus</title>
 
-<meta name="description" content="Interactive multi-layer map of Morocco's power generation, transmission grid, industrial load and data-center pipeline. v1.6 of a platform scaling to MENA.">
+<!-- ───── SEO ───── -->
+<meta name="description" content="Free interactive map of Morocco's electricity infrastructure: 42 power plants, the ONEE high-voltage transmission grid, Spain/Algeria interconnectors, industrial demand and the data-center pipeline — every feature sourced.">
+<meta name="keywords" content="Morocco electricity grid map, Morocco power plants, ONEE transmission network, Morocco data centers, Morocco renewable energy, Noor Ouarzazate, high-voltage grid Morocco, MENA energy infrastructure, GeoJSON">
 <meta name="author" content="Reda Tahiri">
-<meta property="og:title" content="Energy × Digital Nexus — Morocco Infrastructure Map">
-<meta property="og:description" content="Power, grid, industry and data centers — on one transparent map.">
+<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
+<meta name="theme-color" content="#0b0d10">
+<link rel="canonical" href="https://redatahiri37.github.io/morocco-grid/">
+<link rel="alternate" hreflang="en" href="https://redatahiri37.github.io/morocco-grid/">
+<link rel="alternate" hreflang="x-default" href="https://redatahiri37.github.io/morocco-grid/">
+<link rel="icon" href="./favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="./og-image.png">
+
+<!-- Open Graph -->
 <meta property="og:type" content="website">
+<meta property="og:site_name" content="Energy × Digital Nexus">
+<meta property="og:locale" content="en_US">
+<meta property="og:url" content="https://redatahiri37.github.io/morocco-grid/">
+<meta property="og:title" content="Morocco Electricity Grid &amp; Data Center Map">
+<meta property="og:description" content="Power plants, the high-voltage grid, industrial demand and the data-center pipeline — on one transparent, fully sourced map of Morocco.">
+<meta property="og:image" content="https://redatahiri37.github.io/morocco-grid/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Energy × Digital Nexus — interactive map of Morocco's power plants, transmission grid and data centers">
+
+<!-- Twitter / X -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Morocco Electricity Grid &amp; Data Center Map">
+<meta name="twitter:description" content="Power plants, the high-voltage grid, industrial demand and the data-center pipeline — on one transparent, fully sourced map of Morocco.">
+<meta name="twitter:image" content="https://redatahiri37.github.io/morocco-grid/og-image.png">
+<meta name="twitter:image:alt" content="Energy × Digital Nexus — interactive map of Morocco's power plants, transmission grid and data centers">
+
+<!-- Structured data: the page as a web app, and the GeoJSON layers as a
+     Dataset so they are eligible for Google Dataset Search. -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Person",
+      "@id": "https://redatahiri.substack.com/#person",
+      "name": "Reda Tahiri",
+      "url": "https://redatahiri.substack.com/",
+      "sameAs": ["https://github.com/redatahiri37"]
+    },
+    {
+      "@type": "WebApplication",
+      "@id": "https://redatahiri37.github.io/morocco-grid/#app",
+      "name": "Energy × Digital Nexus — Morocco Infrastructure Map",
+      "url": "https://redatahiri37.github.io/morocco-grid/",
+      "description": "Interactive multi-layer map of Morocco's power generation, transmission grid, industrial load and data-center pipeline.",
+      "applicationCategory": "ReferenceApplication",
+      "operatingSystem": "Any (web browser)",
+      "inLanguage": "en",
+      "isAccessibleForFree": true,
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+      "image": "https://redatahiri37.github.io/morocco-grid/og-image.png",
+      "author": { "@id": "https://redatahiri.substack.com/#person" },
+      "codeRepository": "https://github.com/redatahiri37/morocco-grid"
+    },
+    {
+      "@type": "Dataset",
+      "@id": "https://redatahiri37.github.io/morocco-grid/#dataset",
+      "name": "Morocco energy and digital infrastructure (GeoJSON)",
+      "description": "Hand-curated GeoJSON layers covering Morocco's power plants, ONEE high-voltage transmission lines, cross-border interconnectors, planned grid corridors, major industrial electricity loads and data-center projects. Each feature carries a source attribution and a precision or coordinate-confidence flag.",
+      "url": "https://redatahiri37.github.io/morocco-grid/",
+      "keywords": ["Morocco", "electricity", "power plants", "transmission grid", "ONEE", "data centers", "renewable energy", "GeoJSON"],
+      "creator": { "@id": "https://redatahiri.substack.com/#person" },
+      "isAccessibleForFree": true,
+      "spatialCoverage": {
+        "@type": "Place",
+        "name": "Morocco",
+        "geo": { "@type": "GeoShape", "box": "20.8 -17.1 35.93 -1.07" }
+      },
+      "dateModified": "2026-05",
+      "distribution": [
+        { "@type": "DataDownload", "name": "Power plants", "encodingFormat": "application/geo+json", "contentUrl": "https://redatahiri37.github.io/morocco-grid/data/morocco/power-plants.geojson" },
+        { "@type": "DataDownload", "name": "National high-voltage grid", "encodingFormat": "application/geo+json", "contentUrl": "https://redatahiri37.github.io/morocco-grid/data/morocco/national-hv.geojson" },
+        { "@type": "DataDownload", "name": "Interconnectors", "encodingFormat": "application/geo+json", "contentUrl": "https://redatahiri37.github.io/morocco-grid/data/morocco/interconnectors.geojson" },
+        { "@type": "DataDownload", "name": "Planned corridors", "encodingFormat": "application/geo+json", "contentUrl": "https://redatahiri37.github.io/morocco-grid/data/morocco/planned-corridors.geojson" },
+        { "@type": "DataDownload", "name": "Industrial demand", "encodingFormat": "application/geo+json", "contentUrl": "https://redatahiri37.github.io/morocco-grid/data/morocco/industrial.geojson" },
+        { "@type": "DataDownload", "name": "Data centers", "encodingFormat": "application/geo+json", "contentUrl": "https://redatahiri37.github.io/morocco-grid/data/morocco/digital.geojson" }
+      ]
+    }
+  ]
+}
+</script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 
+<link rel="preconnect" href="https://unpkg.com" crossorigin>
+
 <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet">
-<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script defer src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 
 <link rel="stylesheet" href="./style.css">
 </head>
@@ -67,7 +150,7 @@
     </button>
 
     <section class="panel-section intro-section">
-      <h2 class="intro-head">Find where Morocco's power system and digital economy meet.</h2>
+      <h1 class="intro-head">Find where Morocco's power system and digital economy meet.</h1>
       <p class="intro-body">Explore generation, transmission, industrial demand and data-centre projects in one map. Click any feature to see its status, metrics and original source.</p>
     </section>
 
@@ -152,6 +235,23 @@
       <p class="start-body">Click a site or area to understand nearby generation, grid infrastructure, industrial demand and digital connectivity. Use this map to identify locations worth investigating—not to replace technical due diligence.</p>
     </aside>
 
+    <noscript>
+      <div class="no-token">
+        <div class="no-token-inner">
+          <h2>Morocco electricity &amp; data-center map</h2>
+          <p>This interactive map needs JavaScript. It shows Morocco's 42 tracked power plants (including the Noor solar complexes), the ONEE high-voltage transmission grid, the Spain–Morocco and Algeria–Morocco interconnectors, planned grid corridors, major industrial electricity loads and the data-center pipeline.</p>
+          <p>The underlying data is open GeoJSON:
+            <a href="./data/morocco/power-plants.geojson">power plants</a>,
+            <a href="./data/morocco/national-hv.geojson">high-voltage grid</a>,
+            <a href="./data/morocco/interconnectors.geojson">interconnectors</a>,
+            <a href="./data/morocco/planned-corridors.geojson">planned corridors</a>,
+            <a href="./data/morocco/industrial.geojson">industrial demand</a>,
+            <a href="./data/morocco/digital.geojson">data centers</a>.
+          </p>
+        </div>
+      </div>
+    </noscript>
+
     <!-- Map init error (rare — CARTO tiles are public) -->
     <div id="noTokenCard" class="no-token hidden">
       <div class="no-token-inner">
@@ -221,7 +321,7 @@
   </div>
 </div>
 
-<script src="./countries.config.js"></script>
-<script src="./app.js"></script>
+<script defer src="./countries.config.js"></script>
+<script defer src="./app.js"></script>
 </body>
 </html>

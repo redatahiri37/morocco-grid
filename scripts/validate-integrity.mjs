@@ -102,6 +102,38 @@ if (!repoUrl) {
   }
 }
 
+// SEO metadata restates the public URL in a dozen places (canonical, Open
+// Graph, Twitter, JSON-LD, robots.txt, sitemap.xml). Same failure shape as
+// defect #2: a hand-written URL nothing checks. Every absolute self-reference
+// must sit under the canonical URL and resolve to a file in this checkout.
+const canonical = (html.match(/<link rel="canonical" href="([^"]+)"/) || [])[1];
+if (!canonical) {
+  fail("C1", "seo-canonical-missing", "index.html has no <link rel=\"canonical\">");
+} else {
+  const selfRefs = [
+    ...[...html.matchAll(/(?:property|name)="(?:og:url|og:image|twitter:image)" content="([^"]+)"/g)].map((m) => ["index.html", m[1]]),
+    ...[...read("robots.txt").matchAll(/^Sitemap:\s*(\S+)/gm)].map((m) => ["robots.txt", m[1]]),
+    ...[...read("sitemap.xml").matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => ["sitemap.xml", m[1]]),
+  ];
+  for (const m of html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)) {
+    let ld;
+    try { ld = JSON.parse(m[1]); } catch (e) { fail("C1", "seo-jsonld-invalid", `JSON-LD does not parse: ${e.message}`); continue; }
+    const host = new URL(canonical).host;
+    JSON.stringify(ld, (k, v) => {
+      if (typeof v === "string" && ["url", "contentUrl", "image", "@id"].includes(k) && v.includes(host)) selfRefs.push(["JSON-LD", v]);
+      return v;
+    });
+  }
+  for (const [file, url] of selfRefs) {
+    if (!url.startsWith(canonical)) {
+      fail("C1", "seo-url-drift", `${file} references ${url}, outside canonical ${canonical}`);
+      continue;
+    }
+    const rel = url.slice(canonical.length).replace(/[?#].*$/, "");
+    if (rel && !existsSync(R(rel))) fail("C1", "seo-url-drift", `${file} references ${url}, but "${rel}" does not exist`);
+  }
+}
+
 /** owner/repo of the git origin remote, or null if undeterminable. */
 function originSlug() {
   for (const p of [".git/config", ".git"]) {

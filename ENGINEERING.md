@@ -48,11 +48,17 @@ could name one person and link to another.
 | 2 | `REPO_URL` named a repository that does not exist | `repo-url-mismatch` |
 | 3 | Contact `mailto:` at `example.com`, a reserved domain | `reserved-domain` |
 | 5 | Links to `DATA_SOURCES.md` / `ASSUMPTIONS.md`, neither in the repo | `dead-relative-link` |
+| — | *(preventive)* SEO metadata restates the public URL in canonical, Open Graph, Twitter, JSON-LD, `robots.txt` and `sitemap.xml` | `seo-url-drift` |
 
 `identity-link-mismatch` is the interesting one: it holds a map of identity →
 legitimate domains, so naming a person in link text while pointing elsewhere
 is a build failure. Crediting someone else stays correct — the rule checks
 that text and href agree, not that every link is ours.
+
+`seo-url-drift` is preventive, added with the SEO metadata before any defect
+shipped: every absolute self-reference must sit under the `canonical` URL and
+resolve to a file in the checkout. If the site moves (custom domain, renamed
+repo), change the canonical first and the rule lists everything left behind.
 
 ### C2 — Prose asserting facts that nothing verifies
 The UI makes checkable claims — a path, a coverage guarantee, a version —
