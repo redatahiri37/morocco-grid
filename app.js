@@ -218,6 +218,9 @@
         { id:"lyr-dig-points",   src:"src-digital",    dataLayer:"digital" },
         { id:"lyr-dig-cables",   src:"src-digital",    dataLayer:"digital" }
       ],
+      clusters: [
+        { id:"lyr-power-clusters", src:"src-power" }
+      ],
       lines: [
         ...gridDataLayers(currentCountry).flatMap(gridLayerIds),
         "lyr-nhv-backbone", "lyr-nhv-regional", "lyr-nhv-distribution"
@@ -852,7 +855,7 @@
   const wiredLayers = new Set();
 
   function wireLayerInteractions(){
-    const { points, lines } = interactiveLayers();
+    const { points, clusters, lines } = interactiveLayers();
     const unwired = (id) => map.getLayer(id) && !wiredLayers.has(id) && wiredLayers.add(id);
     const pointLayers = points.filter(l => unwired(l.id));
     const lineLayers  = lines.filter(unwired);
@@ -880,16 +883,16 @@
     // Power-plant clusters: click to zoom in. MapLibre 4 returns a promise
     // here; the callback form this used to pass was silently ignored, so
     // clicking a cluster did nothing.
-    if(unwired("lyr-power-clusters")){
-      map.on("click", "lyr-power-clusters", (e)=>{
+    clusters.filter(l => unwired(l.id)).forEach(({id, src})=>{
+      map.on("click", id, (e)=>{
         const f = e.features[0];
-        map.getSource("src-power").getClusterExpansionZoom(f.properties.cluster_id)
+        map.getSource(src).getClusterExpansionZoom(f.properties.cluster_id)
           .then(zoom => map.easeTo({ center: f.geometry.coordinates, zoom }))
           .catch(err => console.warn("[MoroccoMap] cluster zoom failed:", err));
       });
-      map.on("mouseenter", "lyr-power-clusters", ()=>{ map.getCanvas().style.cursor = "pointer"; });
-      map.on("mouseleave", "lyr-power-clusters", ()=>{ map.getCanvas().style.cursor = ""; });
-    }
+      map.on("mouseenter", id, ()=>{ map.getCanvas().style.cursor = "pointer"; });
+      map.on("mouseleave", id, ()=>{ map.getCanvas().style.cursor = ""; });
+    });
 
     lineLayers.forEach(id=>{
       map.on("mousemove", id, (e)=>{
