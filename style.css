@@ -420,35 +420,6 @@ code{font-family:var(--font-mono);font-size:11px;background:var(--bg-2);padding:
 }
 .pop-actions a:hover{background:var(--bg-3);border-color:var(--border-hi);color:var(--text-0);text-decoration:none}
 
-/* No-token overlay */
-.no-token{
-  position:absolute;inset:0;z-index:6;
-  display:flex;align-items:center;justify-content:center;
-  background:
-    radial-gradient(ellipse at 30% 40%, rgba(13,148,136,.08), transparent 60%),
-    radial-gradient(ellipse at 70% 70%, rgba(124,58,237,.06), transparent 60%),
-    #0a0b0d;
-}
-.no-token-inner{
-  max-width:440px;
-  background:var(--bg-1);border:1px solid var(--border);border-radius:6px;
-  padding:22px;
-}
-.no-token h2{font-size:16px;font-weight:600;margin-bottom:6px;letter-spacing:-0.01em}
-.no-token p{font-size:12px;color:var(--text-1);line-height:1.6;margin-bottom:12px}
-.token-row{display:flex;gap:6px;margin-bottom:10px}
-.token-row input{
-  flex:1;
-  background:var(--bg-2);border:1px solid var(--border);border-radius:4px;
-  padding:8px 10px;font-family:var(--font-mono);font-size:11px;outline:none;
-}
-.token-row input:focus{border-color:var(--c-wind)}
-.token-row button{
-  padding:8px 14px;background:var(--c-wind);color:#fff;
-  border-radius:4px;font-weight:600;font-size:11px;letter-spacing:.04em;text-transform:uppercase;
-}
-.token-row button:hover{background:#0fa398}
-
 /* ───────── PROVIDER LEGEND ───────── */
 .provider-legend{display:flex; flex-direction:column; gap:4px}
 .provider-legend .row{

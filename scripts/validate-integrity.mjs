@@ -102,6 +102,41 @@ if (!repoUrl) {
   }
 }
 
+// The map must be open source end to end. A commercial tile provider
+// (CARTO) sat behind the basemap, and the engine loaded from a third-party
+// CDN whose failure threw up a full-screen overlay left over from the
+// Mapbox token era.
+const OPEN_TILE_HOSTS = ["tile.openstreetmap.org", "openinframap.org", "tiles.openfreemap.org"];
+const cssSrc = read("style.css");
+
+// Any string that addresses map tiles or a map style document.
+for (const [, url] of appjs.matchAll(/["'`](https?:\/\/[^"'`\s]*(?:\{z\}|\/styles\/)[^"'`\s]*)["'`]/g)) {
+  const host = url.replace(/^https?:\/\//, "").replace(/\/.*$/, "").replace(/^\$\{s\}\.|^[a-d]\./, "");
+  if (!OPEN_TILE_HOSTS.some((h) => host === h || host.endsWith(`.${h}`))) {
+    fail("C1", "basemap-not-open", `app.js requests tiles from "${host}", which is not an open-source tile host (${OPEN_TILE_HOSTS.join(", ")})`);
+  }
+  if (/[?&](key|api_key|access_token|token)=/i.test(url)) {
+    fail("C1", "basemap-not-open", `tile URL carries an API key parameter: ${url}`);
+  }
+}
+
+// The engine ships with the site, so it cannot fail independently of it.
+for (const [, ref] of html.matchAll(/<(?:script|link)\b[^>]*(?:src|href)=["']([^"']*maplibre[^"']*)["']/gi)) {
+  if (/^https?:\/\//i.test(ref)) {
+    fail("C1", "engine-cdn", `index.html loads the map engine from a third-party CDN: ${ref} — vendor it under ./vendor/`);
+  } else if (!existsSync(resolve(ROOT, ref))) {
+    fail("C1", "engine-cdn", `index.html loads the map engine from "${ref}", which does not exist`);
+  }
+}
+
+// C4: the token overlay was a superseded artifact of the Mapbox era that
+// outlived the migration. No token UI or token plumbing may ship.
+for (const [file, src] of [["index.html", html], ["app.js", appjs], ["style.css", cssSrc]]) {
+  for (const marker of ["noTokenCard", "no-token", "token-row", "accessToken", "access_token"]) {
+    if (src.includes(marker)) fail("C4", "token-ui-remnant", `${file} still contains "${marker}"`);
+  }
+}
+
 /** owner/repo of the git origin remote, or null if undeterminable. */
 function originSlug() {
   for (const p of [".git/config", ".git"]) {
