@@ -193,6 +193,13 @@
   }
   function fmtCap(mw){ return mw == null ? "—" : mw.toLocaleString() + " MW"; }
   function escapeHtml(s){ return String(s==null?"":s).replace(/[&<>"']/g,c=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c])); }
+  // Only http(s) URLs may become an href — a GeoJSON feature's source_url
+  // is untrusted data, and escapeHtml alone does not stop a javascript: URI.
+  function safeUrl(u){
+    if(!u) return null;
+    try{ return /^https?:$/i.test(new URL(u, location.href).protocol) ? u : null; }
+    catch(_){ return null; }
+  }
   function layerKind(layerId){ return LAYER_KIND[layerId] || "other"; }
 
   // The engine ships with the site (./vendor), so it fails only if the page
@@ -387,8 +394,12 @@
               "lyr-oim-substation-poly","lyr-oim-substation-pt"];
     }
     if(kind === "grid"){
+      // Scoped per dataLayerId: "interconnectors" and "planned-corridors"
+      // both have kind "grid" but must render into independent sources/layers,
+      // otherwise the second buildLineLayer() call replaces the first's data.
       return [
-        "lyr-grid-hv","lyr-grid-mv","lyr-grid-lv","lyr-grid-planned","lyr-grid-idle"
+        `lyr-grid-${dataLayerId}-hv`, `lyr-grid-${dataLayerId}-mv`, `lyr-grid-${dataLayerId}-lv`,
+        `lyr-grid-${dataLayerId}-planned`, `lyr-grid-${dataLayerId}-idle`
       ];
     }
     if(kind === "national-grid"){
@@ -409,11 +420,9 @@
   function queryableLayers(){
     // Only interactive (non-cluster, non-halo) layers
     const ids = [];
-    if(map && map.getLayer("lyr-grid-hv"))      ids.push("lyr-grid-hv");
-    if(map && map.getLayer("lyr-grid-mv"))      ids.push("lyr-grid-mv");
-    if(map && map.getLayer("lyr-grid-lv"))      ids.push("lyr-grid-lv");
-    if(map && map.getLayer("lyr-grid-planned")) ids.push("lyr-grid-planned");
-    if(map && map.getLayer("lyr-grid-idle"))    ids.push("lyr-grid-idle");
+    ["interconnectors","planned-corridors"].forEach(dataLayerId=>{
+      layersFor(dataLayerId).forEach(id=>{ if(map && map.getLayer(id)) ids.push(id); });
+    });
     if(map && map.getLayer("lyr-nhv-backbone"))     ids.push("lyr-nhv-backbone");
     if(map && map.getLayer("lyr-nhv-regional"))     ids.push("lyr-nhv-regional");
     if(map && map.getLayer("lyr-nhv-distribution")) ids.push("lyr-nhv-distribution");
@@ -560,27 +569,30 @@
   }
 
   function buildLineLayer(dataLayerId, fc){
-    const srcId = "src-grid";
-    const ids = ["lyr-grid-hv","lyr-grid-mv","lyr-grid-lv","lyr-grid-planned","lyr-grid-idle"];
-    ids.forEach(id=>{ if(map.getLayer(id)) map.removeLayer(id); });
+    // Source and layer ids are scoped to dataLayerId so that the
+    // "interconnectors" and "planned-corridors" calls don't overwrite
+    // each other (both share kind "grid").
+    const srcId = "src-grid-" + dataLayerId;
+    const [idHv, idMv, idLv, idPlanned, idIdle] = layersFor(dataLayerId);
+    [idHv, idMv, idLv, idPlanned, idIdle].forEach(id=>{ if(map.getLayer(id)) map.removeLayer(id); });
     addOrReplace(srcId, { type:"geojson", data: fc });
 
     // Editorial overlay — interconnectors, HVDC corridors, planned/idle
     // strategic links. Rendered bold/colored on top of OIM's grey OSM grid
     // so the strategic story pops.
-    map.addLayer({ id:"lyr-grid-hv", type:"line", source:srcId,
+    map.addLayer({ id:idHv, type:"line", source:srcId,
       filter:["all",["==",["get","status"],"operational"],[">=",["get","voltage_kv"],300]],
       paint:{ "line-color":"#0D9488", "line-width":2.6, "line-opacity":0.95 }});
-    map.addLayer({ id:"lyr-grid-mv", type:"line", source:srcId,
+    map.addLayer({ id:idMv, type:"line", source:srcId,
       filter:["all",["==",["get","status"],"operational"],[">=",["get","voltage_kv"],100],["<",["get","voltage_kv"],300]],
       paint:{ "line-color":"#0D9488", "line-width":1.6, "line-opacity":0.85 }});
-    map.addLayer({ id:"lyr-grid-lv", type:"line", source:srcId,
+    map.addLayer({ id:idLv, type:"line", source:srcId,
       filter:["all",["==",["get","status"],"operational"],["<",["get","voltage_kv"],100]],
       paint:{ "line-color":"#0D9488", "line-width":1.0, "line-opacity":0.6 }});
-    map.addLayer({ id:"lyr-grid-planned", type:"line", source:srcId,
+    map.addLayer({ id:idPlanned, type:"line", source:srcId,
       filter:["==",["get","status"],"planned"],
       paint:{ "line-color":"#a37df0", "line-width":2.0, "line-opacity":0.95, "line-dasharray":[2,2] }});
-    map.addLayer({ id:"lyr-grid-idle", type:"line", source:srcId,
+    map.addLayer({ id:idIdle, type:"line", source:srcId,
       filter:["==",["get","status"],"idle"],
       paint:{ "line-color":"#8a877c", "line-width":1.6, "line-opacity":0.7, "line-dasharray":[1,2] }});
   }
@@ -854,11 +866,16 @@
       { id:"lyr-dig-cables",   src:"src-digital",  dataLayer:"digital" }
     ];
     const lineLayers = [
-      { id:"lyr-grid-hv",      src:"src-grid" },
-      { id:"lyr-grid-mv",      src:"src-grid" },
-      { id:"lyr-grid-lv",      src:"src-grid" },
-      { id:"lyr-grid-planned", src:"src-grid" },
-      { id:"lyr-grid-idle",    src:"src-grid" },
+      { id:"lyr-grid-interconnectors-hv",      src:"src-grid-interconnectors" },
+      { id:"lyr-grid-interconnectors-mv",      src:"src-grid-interconnectors" },
+      { id:"lyr-grid-interconnectors-lv",      src:"src-grid-interconnectors" },
+      { id:"lyr-grid-interconnectors-planned", src:"src-grid-interconnectors" },
+      { id:"lyr-grid-interconnectors-idle",    src:"src-grid-interconnectors" },
+      { id:"lyr-grid-planned-corridors-hv",      src:"src-grid-planned-corridors" },
+      { id:"lyr-grid-planned-corridors-mv",      src:"src-grid-planned-corridors" },
+      { id:"lyr-grid-planned-corridors-lv",      src:"src-grid-planned-corridors" },
+      { id:"lyr-grid-planned-corridors-planned", src:"src-grid-planned-corridors" },
+      { id:"lyr-grid-planned-corridors-idle",    src:"src-grid-planned-corridors" },
       // national-hv is the largest layer (947 lines) and was never wired
       // for hover/click, so its features were inert on the map.
       { id:"lyr-nhv-backbone",     src:"src-national-hv" },
@@ -949,7 +966,7 @@
       <div class="tt-name">${escapeHtml(p.name)}</div>
       <div class="tt-metric">${escapeHtml(metric)}</div>
       <div class="tt-meta">
-        ${p.source_url ? `<a href="${escapeHtml(p.source_url)}" target="_blank" rel="noopener">${escapeHtml(p.source || "—")}</a>` : escapeHtml(p.source || "—")}
+        ${safeUrl(p.source_url) ? `<a href="${escapeHtml(safeUrl(p.source_url))}" target="_blank" rel="noopener">${escapeHtml(p.source || "—")}</a>` : escapeHtml(p.source || "—")}
         ${p.commissioning_year || p.year ? " · " + escapeHtml(p.commissioning_year || p.year) : ""}
       </div>`;
     positionTooltip(point);
@@ -968,7 +985,7 @@
     tooltip.innerHTML = `
       <div class="tt-name">${escapeHtml(p.name)}</div>
       <div class="tt-metric">${escapeHtml(lineVoltage(p))} · ${escapeHtml(p.status || "")}</div>
-      <div class="tt-meta">${p.source_url ? `<a href="${escapeHtml(p.source_url)}" target="_blank" rel="noopener">${escapeHtml(p.source || "—")}</a>` : escapeHtml(p.source || "—")}</div>`;
+      <div class="tt-meta">${safeUrl(p.source_url) ? `<a href="${escapeHtml(safeUrl(p.source_url))}" target="_blank" rel="noopener">${escapeHtml(p.source || "—")}</a>` : escapeHtml(p.source || "—")}</div>`;
     positionTooltip(point);
   }
   function positionTooltip(point){
@@ -1022,11 +1039,11 @@
     $("#popupBody").innerHTML = `
       <h1 class="pop-title">${escapeHtml(p.name)}</h1>
       <div class="pop-sub">${escapeHtml(p.region || "")} · ${coords}</div>
-      <span class="status-pill ${p.status || 'operational'}"><span class="dot"></span>${escapeHtml(p.status || "operational")}</span>
+      <span class="status-pill ${escapeHtml(p.status || 'operational')}"><span class="dot"></span>${escapeHtml(p.status || "operational")}</span>
       <div class="stat-grid">${stats}</div>
       <div class="source-row">
         <span class="src">${escapeHtml(p.source || "—")}</span>
-        ${p.source_url ? `<a href="${escapeHtml(p.source_url)}" target="_blank" rel="noopener">source ↗</a>` : ""}
+        ${safeUrl(p.source_url) ? `<a href="${escapeHtml(safeUrl(p.source_url))}" target="_blank" rel="noopener">source ↗</a>` : ""}
       </div>
       <details>
         <summary>Raw data</summary>
@@ -1034,7 +1051,7 @@
       </details>
       <div class="pop-actions">
         <a href="mailto:reda.tahiri1@gmail.com?subject=${encodeURIComponent('MoroccoMap — correction: '+p.name)}&body=${encodeURIComponent('Feature id: '+p.id+'\n\nSuggested correction:\n')}">Report an error</a>
-        ${p.source_url ? `<a href="${escapeHtml(p.source_url)}" target="_blank" rel="noopener">Primary source ↗</a>` : ""}
+        ${safeUrl(p.source_url) ? `<a href="${escapeHtml(safeUrl(p.source_url))}" target="_blank" rel="noopener">Primary source ↗</a>` : ""}
       </div>`;
     popup.classList.add("open");
     popup.setAttribute("aria-hidden","false");
@@ -1046,7 +1063,7 @@
     $("#popupBody").innerHTML = `
       <h1 class="pop-title">${escapeHtml(p.name)}</h1>
       <div class="pop-sub">${escapeHtml(lineVoltage(p))}</div>
-      <span class="status-pill ${p.status || 'operational'}"><span class="dot"></span>${escapeHtml(p.status || "operational")}</span>
+      <span class="status-pill ${escapeHtml(p.status || 'operational')}"><span class="dot"></span>${escapeHtml(p.status || "operational")}</span>
       <div class="stat-grid">
         <div class="cell"><div class="k">Voltage</div><div class="v">${escapeHtml(lineVoltage(p))}</div></div>
         <div class="cell"><div class="k">Status</div><div class="v" style="text-transform:capitalize">${escapeHtml(p.status || "—")}</div></div>
@@ -1055,7 +1072,7 @@
       </div>
       <div class="source-row">
         <span class="src">${escapeHtml(p.source || "—")}</span>
-        ${p.source_url ? `<a href="${escapeHtml(p.source_url)}" target="_blank" rel="noopener">source ↗</a>` : ""}
+        ${safeUrl(p.source_url) ? `<a href="${escapeHtml(safeUrl(p.source_url))}" target="_blank" rel="noopener">source ↗</a>` : ""}
       </div>
       <details>
         <summary>Raw data</summary>
