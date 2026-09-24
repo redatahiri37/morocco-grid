@@ -4,8 +4,10 @@
    tooltips, popups, methodology modal.
 
    v1.1 — public basemap pass:
-     · Mapbox GL → MapLibre GL + CARTO dark-matter / positron
-     · No token required (fully public, like enersite / Pawel)
+     · Mapbox GL → MapLibre GL, no token required
+   v1.6 — open-source map stack:
+     · Basemap: OpenStreetMap tiles (CARTO removed)
+     · MapLibre vendored under ./vendor, no CDN dependency
      · WS boundary filtered out of render
      · DC bubble radius scales with capacity_estimate_mw
      · Planned / announced DCs rendered with lower opacity
@@ -17,24 +19,33 @@
   // ---------- Config & country manifest ----------
   const CFG = window.APP_CONFIG || { defaultCountry:"morocco" };
 
-  // Basemap: CARTO raster tiles (dark_all / light_all). We build the
-  // MapLibre style inline so there is zero chance of a style-spec parse
-  // failure at load time. Raster is heavier than vector but bulletproof.
+  // Basemap: OpenStreetMap standard raster tiles — open data (ODbL), no
+  // account, no key, no commercial tile provider. OSM publishes a single
+  // light style, so dark mode renders the same tiles with inverted
+  // brightness and no saturation. The style is built inline so there is no
+  // remote style document to fail at load time.
+  // OSM tile usage policy: https://operations.osmfoundation.org/policies/tiles/
   function basemapStyle(theme){
-    const variant = theme === "dark" ? "dark_all" : "light_all";
+    const dark = theme === "dark";
     return {
       version: 8,
       glyphs: "https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf",
       sources: {
-        "carto-base": {
+        "osm-base": {
           type: "raster",
-          tiles: ["a","b","c","d"].map(s =>
-            `https://${s}.basemaps.cartocdn.com/${variant}/{z}/{x}/{y}.png`),
+          tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
           tileSize: 256,
-          attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors © <a href="https://carto.com/attributions" target="_blank">CARTO</a>'
+          maxzoom: 19,
+          attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors'
         }
       },
-      layers: [{ id: "carto-base", type: "raster", source: "carto-base" }]
+      layers: [{
+        id: "osm-base", type: "raster", source: "osm-base",
+        paint: dark
+          ? { "raster-brightness-min": 1, "raster-brightness-max": 0.08,
+              "raster-saturation": -1, "raster-contrast": 0.1 }
+          : { "raster-saturation": -0.35 }
+      }]
     };
   }
 
@@ -116,7 +127,6 @@
   const $ = (sel)=>document.querySelector(sel);
   const tooltip = $("#tooltip");
   const popup   = $("#popup");
-  const noTokenCard = $("#noTokenCard");
 
   // ---------- Theme ----------
   const savedTheme = localStorage.getItem("mg.theme") || "dark";
@@ -183,11 +193,19 @@
   }
   function fmtCap(mw){ return mw == null ? "—" : mw.toLocaleString() + " MW"; }
   function escapeHtml(s){ return String(s==null?"":s).replace(/[&<>"']/g,c=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c])); }
+  // Only http(s) URLs may become an href — a GeoJSON feature's source_url
+  // is untrusted data, and escapeHtml alone does not stop a javascript: URI.
+  function safeUrl(u){
+    if(!u) return null;
+    try{ return /^https?:$/i.test(new URL(u, location.href).protocol) ? u : null; }
+    catch(_){ return null; }
+  }
   function layerKind(layerId){ return LAYER_KIND[layerId] || "other"; }
 
-  function showMapError(reason){
-    noTokenCard.classList.remove("hidden");
-    if(reason) console.warn("[MoroccoMap]", reason);
+  // The engine ships with the site (./vendor), so it fails only if the page
+  // itself failed to load. Log rather than cover the map with an overlay.
+  function logMapError(reason){
+    console.error("[MoroccoMap] map init failed:", reason);
   }
 
   // ---------- Boot ----------
@@ -217,7 +235,7 @@
   }
 
   function bootMap(){
-    if(typeof maplibregl === "undefined"){ showMapError("MapLibre GL not loaded"); return; }
+    if(typeof maplibregl === "undefined"){ logMapError("MapLibre GL not loaded"); return; }
     try{
       const c = COUNTRIES[currentCountry];
       map = new maplibregl.Map({
@@ -239,7 +257,7 @@
         console.warn("[MoroccoMap] map error:", msg);
       });
     } catch(err){
-      showMapError(String(err));
+      logMapError(String(err));
     }
   }
 
@@ -363,7 +381,7 @@
     host.innerHTML = c.layers.map(L=>
       `<li><strong>${escapeHtml(L.title)}:</strong> ${escapeHtml(L.source)} — <a href="${escapeHtml(L.sourceUrl)}" target="_blank" rel="noopener">${escapeHtml(L.sourceUrl)}</a> <span class="micro">(updated ${escapeHtml(L.updated)})</span></li>`
     ).join("") + `<li><strong>Boundary:</strong> Natural Earth 1:50m Admin 0 — <a href="https://www.naturalearthdata.com/" target="_blank" rel="noopener">naturalearthdata.com</a> (public domain).</li>` +
-    `<li><strong>Basemap:</strong> MapLibre GL + <a href="https://carto.com/attributions" target="_blank" rel="noopener">CARTO</a> + <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors — public, no token required.</li>`;
+    `<li><strong>Basemap:</strong> <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors (ODbL), rendered with <a href="https://maplibre.org/" target="_blank" rel="noopener">MapLibre GL JS</a> (BSD-3-Clause). Open source end to end — no account, no key.</li>`;
   }
 
   // ---------- Layer ID bookkeeping ----------
@@ -376,8 +394,12 @@
               "lyr-oim-substation-poly","lyr-oim-substation-pt"];
     }
     if(kind === "grid"){
+      // Scoped per dataLayerId: "interconnectors" and "planned-corridors"
+      // both have kind "grid" but must render into independent sources/layers,
+      // otherwise the second buildLineLayer() call replaces the first's data.
       return [
-        "lyr-grid-hv","lyr-grid-mv","lyr-grid-lv","lyr-grid-planned","lyr-grid-idle"
+        `lyr-grid-${dataLayerId}-hv`, `lyr-grid-${dataLayerId}-mv`, `lyr-grid-${dataLayerId}-lv`,
+        `lyr-grid-${dataLayerId}-planned`, `lyr-grid-${dataLayerId}-idle`
       ];
     }
     if(kind === "national-grid"){
@@ -398,11 +420,9 @@
   function queryableLayers(){
     // Only interactive (non-cluster, non-halo) layers
     const ids = [];
-    if(map && map.getLayer("lyr-grid-hv"))      ids.push("lyr-grid-hv");
-    if(map && map.getLayer("lyr-grid-mv"))      ids.push("lyr-grid-mv");
-    if(map && map.getLayer("lyr-grid-lv"))      ids.push("lyr-grid-lv");
-    if(map && map.getLayer("lyr-grid-planned")) ids.push("lyr-grid-planned");
-    if(map && map.getLayer("lyr-grid-idle"))    ids.push("lyr-grid-idle");
+    ["interconnectors","planned-corridors"].forEach(dataLayerId=>{
+      layersFor(dataLayerId).forEach(id=>{ if(map && map.getLayer(id)) ids.push(id); });
+    });
     if(map && map.getLayer("lyr-nhv-backbone"))     ids.push("lyr-nhv-backbone");
     if(map && map.getLayer("lyr-nhv-regional"))     ids.push("lyr-nhv-regional");
     if(map && map.getLayer("lyr-nhv-distribution")) ids.push("lyr-nhv-distribution");
@@ -549,27 +569,30 @@
   }
 
   function buildLineLayer(dataLayerId, fc){
-    const srcId = "src-grid";
-    const ids = ["lyr-grid-hv","lyr-grid-mv","lyr-grid-lv","lyr-grid-planned","lyr-grid-idle"];
-    ids.forEach(id=>{ if(map.getLayer(id)) map.removeLayer(id); });
+    // Source and layer ids are scoped to dataLayerId so that the
+    // "interconnectors" and "planned-corridors" calls don't overwrite
+    // each other (both share kind "grid").
+    const srcId = "src-grid-" + dataLayerId;
+    const [idHv, idMv, idLv, idPlanned, idIdle] = layersFor(dataLayerId);
+    [idHv, idMv, idLv, idPlanned, idIdle].forEach(id=>{ if(map.getLayer(id)) map.removeLayer(id); });
     addOrReplace(srcId, { type:"geojson", data: fc });
 
     // Editorial overlay — interconnectors, HVDC corridors, planned/idle
     // strategic links. Rendered bold/colored on top of OIM's grey OSM grid
     // so the strategic story pops.
-    map.addLayer({ id:"lyr-grid-hv", type:"line", source:srcId,
+    map.addLayer({ id:idHv, type:"line", source:srcId,
       filter:["all",["==",["get","status"],"operational"],[">=",["get","voltage_kv"],300]],
       paint:{ "line-color":"#0D9488", "line-width":2.6, "line-opacity":0.95 }});
-    map.addLayer({ id:"lyr-grid-mv", type:"line", source:srcId,
+    map.addLayer({ id:idMv, type:"line", source:srcId,
       filter:["all",["==",["get","status"],"operational"],[">=",["get","voltage_kv"],100],["<",["get","voltage_kv"],300]],
       paint:{ "line-color":"#0D9488", "line-width":1.6, "line-opacity":0.85 }});
-    map.addLayer({ id:"lyr-grid-lv", type:"line", source:srcId,
+    map.addLayer({ id:idLv, type:"line", source:srcId,
       filter:["all",["==",["get","status"],"operational"],["<",["get","voltage_kv"],100]],
       paint:{ "line-color":"#0D9488", "line-width":1.0, "line-opacity":0.6 }});
-    map.addLayer({ id:"lyr-grid-planned", type:"line", source:srcId,
+    map.addLayer({ id:idPlanned, type:"line", source:srcId,
       filter:["==",["get","status"],"planned"],
       paint:{ "line-color":"#a37df0", "line-width":2.0, "line-opacity":0.95, "line-dasharray":[2,2] }});
-    map.addLayer({ id:"lyr-grid-idle", type:"line", source:srcId,
+    map.addLayer({ id:idIdle, type:"line", source:srcId,
       filter:["==",["get","status"],"idle"],
       paint:{ "line-color":"#8a877c", "line-width":1.6, "line-opacity":0.7, "line-dasharray":[1,2] }});
   }
@@ -843,11 +866,16 @@
       { id:"lyr-dig-cables",   src:"src-digital",  dataLayer:"digital" }
     ];
     const lineLayers = [
-      { id:"lyr-grid-hv",      src:"src-grid" },
-      { id:"lyr-grid-mv",      src:"src-grid" },
-      { id:"lyr-grid-lv",      src:"src-grid" },
-      { id:"lyr-grid-planned", src:"src-grid" },
-      { id:"lyr-grid-idle",    src:"src-grid" },
+      { id:"lyr-grid-interconnectors-hv",      src:"src-grid-interconnectors" },
+      { id:"lyr-grid-interconnectors-mv",      src:"src-grid-interconnectors" },
+      { id:"lyr-grid-interconnectors-lv",      src:"src-grid-interconnectors" },
+      { id:"lyr-grid-interconnectors-planned", src:"src-grid-interconnectors" },
+      { id:"lyr-grid-interconnectors-idle",    src:"src-grid-interconnectors" },
+      { id:"lyr-grid-planned-corridors-hv",      src:"src-grid-planned-corridors" },
+      { id:"lyr-grid-planned-corridors-mv",      src:"src-grid-planned-corridors" },
+      { id:"lyr-grid-planned-corridors-lv",      src:"src-grid-planned-corridors" },
+      { id:"lyr-grid-planned-corridors-planned", src:"src-grid-planned-corridors" },
+      { id:"lyr-grid-planned-corridors-idle",    src:"src-grid-planned-corridors" },
       // national-hv is the largest layer (947 lines) and was never wired
       // for hover/click, so its features were inert on the map.
       { id:"lyr-nhv-backbone",     src:"src-national-hv" },
@@ -938,7 +966,7 @@
       <div class="tt-name">${escapeHtml(p.name)}</div>
       <div class="tt-metric">${escapeHtml(metric)}</div>
       <div class="tt-meta">
-        ${p.source_url ? `<a href="${escapeHtml(p.source_url)}" target="_blank" rel="noopener">${escapeHtml(p.source || "—")}</a>` : escapeHtml(p.source || "—")}
+        ${safeUrl(p.source_url) ? `<a href="${escapeHtml(safeUrl(p.source_url))}" target="_blank" rel="noopener">${escapeHtml(p.source || "—")}</a>` : escapeHtml(p.source || "—")}
         ${p.commissioning_year || p.year ? " · " + escapeHtml(p.commissioning_year || p.year) : ""}
       </div>`;
     positionTooltip(point);
@@ -957,7 +985,7 @@
     tooltip.innerHTML = `
       <div class="tt-name">${escapeHtml(p.name)}</div>
       <div class="tt-metric">${escapeHtml(lineVoltage(p))} · ${escapeHtml(p.status || "")}</div>
-      <div class="tt-meta">${p.source_url ? `<a href="${escapeHtml(p.source_url)}" target="_blank" rel="noopener">${escapeHtml(p.source || "—")}</a>` : escapeHtml(p.source || "—")}</div>`;
+      <div class="tt-meta">${safeUrl(p.source_url) ? `<a href="${escapeHtml(safeUrl(p.source_url))}" target="_blank" rel="noopener">${escapeHtml(p.source || "—")}</a>` : escapeHtml(p.source || "—")}</div>`;
     positionTooltip(point);
   }
   function positionTooltip(point){
@@ -1011,11 +1039,11 @@
     $("#popupBody").innerHTML = `
       <h1 class="pop-title">${escapeHtml(p.name)}</h1>
       <div class="pop-sub">${escapeHtml(p.region || "")} · ${coords}</div>
-      <span class="status-pill ${p.status || 'operational'}"><span class="dot"></span>${escapeHtml(p.status || "operational")}</span>
+      <span class="status-pill ${escapeHtml(p.status || 'operational')}"><span class="dot"></span>${escapeHtml(p.status || "operational")}</span>
       <div class="stat-grid">${stats}</div>
       <div class="source-row">
         <span class="src">${escapeHtml(p.source || "—")}</span>
-        ${p.source_url ? `<a href="${escapeHtml(p.source_url)}" target="_blank" rel="noopener">source ↗</a>` : ""}
+        ${safeUrl(p.source_url) ? `<a href="${escapeHtml(safeUrl(p.source_url))}" target="_blank" rel="noopener">source ↗</a>` : ""}
       </div>
       <details>
         <summary>Raw data</summary>
@@ -1023,7 +1051,7 @@
       </details>
       <div class="pop-actions">
         <a href="mailto:reda.tahiri1@gmail.com?subject=${encodeURIComponent('MoroccoMap — correction: '+p.name)}&body=${encodeURIComponent('Feature id: '+p.id+'\n\nSuggested correction:\n')}">Report an error</a>
-        ${p.source_url ? `<a href="${escapeHtml(p.source_url)}" target="_blank" rel="noopener">Primary source ↗</a>` : ""}
+        ${safeUrl(p.source_url) ? `<a href="${escapeHtml(safeUrl(p.source_url))}" target="_blank" rel="noopener">Primary source ↗</a>` : ""}
       </div>`;
     popup.classList.add("open");
     popup.setAttribute("aria-hidden","false");
@@ -1035,7 +1063,7 @@
     $("#popupBody").innerHTML = `
       <h1 class="pop-title">${escapeHtml(p.name)}</h1>
       <div class="pop-sub">${escapeHtml(lineVoltage(p))}</div>
-      <span class="status-pill ${p.status || 'operational'}"><span class="dot"></span>${escapeHtml(p.status || "operational")}</span>
+      <span class="status-pill ${escapeHtml(p.status || 'operational')}"><span class="dot"></span>${escapeHtml(p.status || "operational")}</span>
       <div class="stat-grid">
         <div class="cell"><div class="k">Voltage</div><div class="v">${escapeHtml(lineVoltage(p))}</div></div>
         <div class="cell"><div class="k">Status</div><div class="v" style="text-transform:capitalize">${escapeHtml(p.status || "—")}</div></div>
@@ -1044,7 +1072,7 @@
       </div>
       <div class="source-row">
         <span class="src">${escapeHtml(p.source || "—")}</span>
-        ${p.source_url ? `<a href="${escapeHtml(p.source_url)}" target="_blank" rel="noopener">source ↗</a>` : ""}
+        ${safeUrl(p.source_url) ? `<a href="${escapeHtml(safeUrl(p.source_url))}" target="_blank" rel="noopener">source ↗</a>` : ""}
       </div>
       <details>
         <summary>Raw data</summary>

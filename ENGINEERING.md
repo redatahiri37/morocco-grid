@@ -48,6 +48,8 @@ could name one person and link to another.
 | 2 | `REPO_URL` named a repository that does not exist | `repo-url-mismatch` |
 | 3 | Contact `mailto:` at `example.com`, a reserved domain | `reserved-domain` |
 | 5 | Links to `DATA_SOURCES.md` / `ASSUMPTIONS.md`, neither in the repo | `dead-relative-link` |
+| 12 | Basemap served by CARTO, a commercial tile provider, on a map that promises open data | `basemap-not-open` |
+| 13 | Map engine loaded from the unpkg CDN; when it failed, a full-screen overlay hid the map | `engine-cdn` |
 | — | *(preventive)* SEO metadata restates the public URL in canonical, Open Graph, Twitter, JSON-LD, `robots.txt` and `sitemap.xml` | `seo-url-drift` |
 
 `identity-link-mismatch` is the interesting one: it holds a map of identity →
@@ -94,6 +96,7 @@ Files stop being referenced and nothing notices.
 |---|---|---|
 | 10 | `grid-lines.geojson` unreferenced; fully absorbed by two other layers | `orphan-data-file` |
 | 11 | `transmission-lines.geojson` unreferenced — but *not* a duplicate | `orphan-data-file` + `RETAINED` |
+| 14 | Mapbox-era token overlay (`#noTokenCard`, token-input CSS) survived the MapLibre migration | `token-ui-remnant` |
 
 The distinction matters and is why deletion is not the automatic remedy.
 `grid-lines` was genuinely superseded — its 8 planned features are in
@@ -152,3 +155,35 @@ design smell worth its own agenda slot.
 | `transmission-lines.geojson` | Retained, unreferenced | Independent WBG 2018 HV dataset (541 features, full source URLs). Not a duplicate of `national-hv`. Pending a decision on surfacing it as its own layer. |
 | `power-plants.geojson` source URLs | 0/42, documented | Its features cite twelve distinct sources; no single URL is honest. Needs per-feature curation — a data task, not a code one. |
 | `national-hv` precision field | Uses `coord_method` / `coord_confidence` | Different provenance model from `precision`; documented in Methodology rather than coerced into a shape that would misdescribe it. |
+
+---
+
+## Defects 12–14: the token overlay
+
+Reported as "the API token not found layer". The chain:
+
+1. The map was built on Mapbox, which needs an access token. A full-screen
+   card (`#noTokenCard`) handled the missing-token case.
+2. The v1.1 migration to MapLibre removed the need for a token but kept the
+   card, reworded as "Map engine unavailable". The id, class names and
+   token-input CSS stayed — a C4 artifact that outlived its reason.
+3. MapLibre itself loaded from unpkg. Any CDN failure left `maplibregl`
+   undefined, and the leftover card covered the whole map. A third-party
+   dependency could take down the page's main feature, and the fallback for
+   it was a relic.
+4. Separately, the basemap came from CARTO: free to use, but a commercial
+   provider, on a map whose whole positioning is open and inspectable data.
+
+Fix: MapLibre GL JS 4.7.1 (BSD-3-Clause) is vendored under
+`vendor/maplibre-gl/`, so the engine ships with the page and cannot fail
+independently of it. With no independent failure mode left, the overlay
+has no job, and is deleted along with its CSS. The basemap is
+OpenStreetMap's own tiles, rendered inverted and desaturated for dark mode.
+
+The three rules above were verified against `main` at `4e05a96`, before the
+fix: 8 violations there, 0 after.
+
+Remaining open external dependency, for the agenda: label glyphs come from
+`demotiles.maplibre.org`, MapLibre's demo font server. It is open source but
+not intended for production traffic. Vendoring the two font stacks the map
+uses would close it.

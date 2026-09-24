@@ -96,10 +96,9 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 
-<link rel="preconnect" href="https://unpkg.com" crossorigin>
-
-<link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet">
-<script defer src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<!-- MapLibre GL JS 4.7.1 (BSD-3-Clause), vendored so the map engine ships with the site -->
+<link href="./vendor/maplibre-gl/maplibre-gl.css" rel="stylesheet">
+<script src="./vendor/maplibre-gl/maplibre-gl.js"></script>
 
 <link rel="stylesheet" href="./style.css">
 </head>
@@ -236,8 +235,8 @@
     </aside>
 
     <noscript>
-      <div class="no-token">
-        <div class="no-token-inner">
+      <div class="noscript-card">
+        <div class="noscript-inner">
           <h2>Morocco electricity &amp; data-center map</h2>
           <p>This interactive map needs JavaScript. It shows Morocco's 42 tracked power plants (including the Noor solar complexes), the ONEE high-voltage transmission grid, the Spain–Morocco and Algeria–Morocco interconnectors, planned grid corridors, major industrial electricity loads and the data-center pipeline.</p>
           <p>The underlying data is open GeoJSON:
@@ -251,15 +250,6 @@
         </div>
       </div>
     </noscript>
-
-    <!-- Map init error (rare — CARTO tiles are public) -->
-    <div id="noTokenCard" class="no-token hidden">
-      <div class="no-token-inner">
-        <h2>Map engine unavailable</h2>
-        <p>The map could not initialise. This is almost always a transient network issue — reload to retry. If it persists, the basemap provider (CARTO) may be unreachable from your network.</p>
-        <p class="micro">No account or token required — this map uses open tiles from <a href="https://carto.com/basemaps" target="_blank" rel="noopener">CARTO</a> + <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> via MapLibre.</p>
-      </div>
-    </div>
 
     <!-- Hover tooltip -->
     <div id="tooltip" class="tooltip" style="display:none"></div>
@@ -286,7 +276,7 @@
     <span class="bb-dot" style="background:#3B82F6"></span>
     <span class="bb-dot" style="background:#EA580C"></span>
     <span class="bb-dot" style="background:#7C3AED"></span>
-    <span>Data: GEM · Datacentermap · Grid: <a href="https://openinframap.org" target="_blank" rel="noopener">OpenInfraMap</a> (ODbL) · Basemap: MapLibre | © <a href="https://carto.com/attributions" target="_blank" rel="noopener">CARTO</a>, © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors</span>
+    <span>Data: GEM · Datacentermap · Grid: <a href="https://openinframap.org" target="_blank" rel="noopener">OpenInfraMap</a> (ODbL) · Basemap: © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors (ODbL) via <a href="https://maplibre.org/" target="_blank" rel="noopener">MapLibre</a></span>
   </div>
   <div class="bb-center">
     Not affiliated with any entity. Built by <a href="https://redatahiri.substack.com/?utm_campaign=profile_chips" target="_blank" rel="noopener">Reda Tahiri — Energy × Digital Nexus</a>.

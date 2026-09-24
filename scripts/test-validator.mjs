@@ -69,6 +69,18 @@ const CASES = [
   { defect: "social preview image referenced but absent", rule: "seo-url-drift",
     mutate: (d) => unlinkSync(join(d, "og-image.png")) },
 
+  { defect: "#12 basemap served by a commercial tile provider", rule: "basemap-not-open",
+    mutate: (d) => sub(d, "app.js", "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+                                    "https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png") },
+
+  { defect: "#13 map engine loaded from a third-party CDN", rule: "engine-cdn",
+    mutate: (d) => sub(d, "index.html", '<script src="./vendor/maplibre-gl/maplibre-gl.js"></script>',
+                                        '<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>') },
+
+  { defect: "#14 Mapbox-era token overlay still shipped", rule: "token-ui-remnant",
+    mutate: (d) => sub(d, "index.html", "<!-- Hover tooltip -->",
+                                        '<div id="noTokenCard" class="no-token hidden"></div>\n    <!-- Hover tooltip -->') },
+
   { defect: "manifest points at a file that is absent", rule: "layer-file-missing",
     mutate: (d) => unlinkSync(join(d, "data/morocco/digital.geojson")) },
 ];
