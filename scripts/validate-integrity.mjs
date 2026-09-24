@@ -193,11 +193,13 @@ for (const [key, country] of Object.entries(countries)) {
   const wired = wiredBlock ? wiredBlock[1] : "";
 
   // A layer kind → the map-layer id prefix its features render under.
+  // "grid" is scoped per layer.id (interconnectors / planned-corridors both
+  // have kind "grid" but render into independent, dataLayerId-prefixed ids —
+  // see layersFor() in app.js).
   const KIND_LAYER_IDS = {
     "power":         ["lyr-power-points"],
     "industrial":    ["lyr-ind-points"],
     "digital":       ["lyr-dig-points", "lyr-dig-cables"],
-    "grid":          ["lyr-grid-hv"],
     "national-grid": ["lyr-nhv-backbone", "lyr-nhv-regional", "lyr-nhv-distribution"],
     "oim":           [], // third-party vector tiles, not our features
   };
@@ -205,7 +207,8 @@ for (const [key, country] of Object.entries(countries)) {
   for (const layer of country.layers) {
     const kind = kinds[layer.id];
     if (!kind) { fail("C3", "layer-kind-missing", `${key}: layer "${layer.id}" has no LAYER_KIND entry`); continue; }
-    for (const mapId of KIND_LAYER_IDS[kind] ?? []) {
+    const mapIds = kind === "grid" ? [`lyr-grid-${layer.id}-hv`] : (KIND_LAYER_IDS[kind] ?? []);
+    for (const mapId of mapIds) {
       if (!wired.includes(`"${mapId}"`)) {
         fail("C3", "layer-not-wired",
           `${key}: layer "${layer.id}" (kind ${kind}) renders as "${mapId}" but that id is absent from wireLayerInteractions()`);
