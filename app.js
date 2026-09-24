@@ -4,8 +4,10 @@
    tooltips, popups, methodology modal.
 
    v1.1 — public basemap pass:
-     · Mapbox GL → MapLibre GL + CARTO dark-matter / positron
-     · No token required (fully public, like enersite / Pawel)
+     · Mapbox GL → MapLibre GL, no token required
+   v1.6 — open-source map stack:
+     · Basemap: OpenStreetMap tiles (CARTO removed)
+     · MapLibre vendored under ./vendor, no CDN dependency
      · WS boundary filtered out of render
      · DC bubble radius scales with capacity_estimate_mw
      · Planned / announced DCs rendered with lower opacity
@@ -17,24 +19,33 @@
   // ---------- Config & country manifest ----------
   const CFG = window.APP_CONFIG || { defaultCountry:"morocco" };
 
-  // Basemap: CARTO raster tiles (dark_all / light_all). We build the
-  // MapLibre style inline so there is zero chance of a style-spec parse
-  // failure at load time. Raster is heavier than vector but bulletproof.
+  // Basemap: OpenStreetMap standard raster tiles — open data (ODbL), no
+  // account, no key, no commercial tile provider. OSM publishes a single
+  // light style, so dark mode renders the same tiles with inverted
+  // brightness and no saturation. The style is built inline so there is no
+  // remote style document to fail at load time.
+  // OSM tile usage policy: https://operations.osmfoundation.org/policies/tiles/
   function basemapStyle(theme){
-    const variant = theme === "dark" ? "dark_all" : "light_all";
+    const dark = theme === "dark";
     return {
       version: 8,
       glyphs: "https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf",
       sources: {
-        "carto-base": {
+        "osm-base": {
           type: "raster",
-          tiles: ["a","b","c","d"].map(s =>
-            `https://${s}.basemaps.cartocdn.com/${variant}/{z}/{x}/{y}.png`),
+          tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
           tileSize: 256,
-          attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors © <a href="https://carto.com/attributions" target="_blank">CARTO</a>'
+          maxzoom: 19,
+          attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors'
         }
       },
-      layers: [{ id: "carto-base", type: "raster", source: "carto-base" }]
+      layers: [{
+        id: "osm-base", type: "raster", source: "osm-base",
+        paint: dark
+          ? { "raster-brightness-min": 1, "raster-brightness-max": 0.08,
+              "raster-saturation": -1, "raster-contrast": 0.1 }
+          : { "raster-saturation": -0.35 }
+      }]
     };
   }
 
@@ -116,7 +127,6 @@
   const $ = (sel)=>document.querySelector(sel);
   const tooltip = $("#tooltip");
   const popup   = $("#popup");
-  const noTokenCard = $("#noTokenCard");
 
   // ---------- Theme ----------
   const savedTheme = localStorage.getItem("mg.theme") || "dark";
@@ -185,9 +195,10 @@
   function escapeHtml(s){ return String(s==null?"":s).replace(/[&<>"']/g,c=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c])); }
   function layerKind(layerId){ return LAYER_KIND[layerId] || "other"; }
 
-  function showMapError(reason){
-    noTokenCard.classList.remove("hidden");
-    if(reason) console.warn("[MoroccoMap]", reason);
+  // The engine ships with the site (./vendor), so it fails only if the page
+  // itself failed to load. Log rather than cover the map with an overlay.
+  function logMapError(reason){
+    console.error("[MoroccoMap] map init failed:", reason);
   }
 
   // ---------- Boot ----------
@@ -217,7 +228,7 @@
   }
 
   function bootMap(){
-    if(typeof maplibregl === "undefined"){ showMapError("MapLibre GL not loaded"); return; }
+    if(typeof maplibregl === "undefined"){ logMapError("MapLibre GL not loaded"); return; }
     try{
       const c = COUNTRIES[currentCountry];
       map = new maplibregl.Map({
@@ -239,7 +250,7 @@
         console.warn("[MoroccoMap] map error:", msg);
       });
     } catch(err){
-      showMapError(String(err));
+      logMapError(String(err));
     }
   }
 
@@ -363,7 +374,7 @@
     host.innerHTML = c.layers.map(L=>
       `<li><strong>${escapeHtml(L.title)}:</strong> ${escapeHtml(L.source)} — <a href="${escapeHtml(L.sourceUrl)}" target="_blank" rel="noopener">${escapeHtml(L.sourceUrl)}</a> <span class="micro">(updated ${escapeHtml(L.updated)})</span></li>`
     ).join("") + `<li><strong>Boundary:</strong> Natural Earth 1:50m Admin 0 — <a href="https://www.naturalearthdata.com/" target="_blank" rel="noopener">naturalearthdata.com</a> (public domain).</li>` +
-    `<li><strong>Basemap:</strong> MapLibre GL + <a href="https://carto.com/attributions" target="_blank" rel="noopener">CARTO</a> + <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors — public, no token required.</li>`;
+    `<li><strong>Basemap:</strong> <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors (ODbL), rendered with <a href="https://maplibre.org/" target="_blank" rel="noopener">MapLibre GL JS</a> (BSD-3-Clause). Open source end to end — no account, no key.</li>`;
   }
 
   // ---------- Layer ID bookkeeping ----------
