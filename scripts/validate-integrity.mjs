@@ -224,18 +224,35 @@ for (const [key, country] of Object.entries(countries)) {
   const kinds = Object.fromEntries(
     [...kindBlock.matchAll(/"([\w-]+)"\s*:\s*"([\w-]+)"/g)].map(([, k, v]) => [k, v]));
 
-  const wiredBlock = appjs.match(/function wireLayerInteractions\(\)\{([\s\S]*?)\n  \}/);
-  const wired = wiredBlock ? wiredBlock[1] : "";
+  // interactiveLayers() is the one list of hover/click layers. Defect #8
+  // happened because the list existed in two hand-kept copies.
+  const body = (fn) => (appjs.match(new RegExp(`function ${fn}\\(\\)\\{([\\s\\S]*?)\\n  \\}\\n`)) || [])[1] || "";
+  const wired = body("interactiveLayers");
+  if (!wired) fail("C3", "interaction-list-missing", "app.js no longer defines interactiveLayers()");
+  for (const consumer of ["wireLayerInteractions", "queryableLayers"]) {
+    const src = body(consumer);
+    if (!src.includes("interactiveLayers()")) {
+      fail("C3", "interaction-list-duplicated", `${consumer}() does not derive its layers from interactiveLayers()`);
+    }
+    if (/"lyr-[\w-]+"/.test(src)) {
+      fail("C3", "interaction-list-duplicated", `${consumer}() hard-codes layer ids instead of reading interactiveLayers()`);
+    }
+  }
 
-  // A layer kind → the map-layer id prefix its features render under.
+  // A layer kind → the map-layer ids its features render under. Grid layers
+  // get per-layer ids derived from the manifest, so the requirement there is
+  // that the list derives them rather than naming them.
   const KIND_LAYER_IDS = {
     "power":         ["lyr-power-points"],
     "industrial":    ["lyr-ind-points"],
     "digital":       ["lyr-dig-points", "lyr-dig-cables"],
-    "grid":          ["lyr-grid-hv"],
+    "grid":          [],
     "national-grid": ["lyr-nhv-backbone", "lyr-nhv-regional", "lyr-nhv-distribution"],
     "oim":           [], // third-party vector tiles, not our features
   };
+  if (Object.values(kinds).includes("grid") && !wired.includes("gridDataLayers(")) {
+    fail("C3", "layer-not-wired", "interactiveLayers() does not derive grid line ids from the manifest (gridDataLayers)");
+  }
 
   for (const layer of country.layers) {
     const kind = kinds[layer.id];
@@ -243,7 +260,7 @@ for (const [key, country] of Object.entries(countries)) {
     for (const mapId of KIND_LAYER_IDS[kind] ?? []) {
       if (!wired.includes(`"${mapId}"`)) {
         fail("C3", "layer-not-wired",
-          `${key}: layer "${layer.id}" (kind ${kind}) renders as "${mapId}" but that id is absent from wireLayerInteractions()`);
+          `${key}: layer "${layer.id}" (kind ${kind}) renders as "${mapId}" but that id is absent from interactiveLayers()`);
       }
     }
     if (!layer.sourceUrl || !/^https?:\/\//.test(layer.sourceUrl)) {

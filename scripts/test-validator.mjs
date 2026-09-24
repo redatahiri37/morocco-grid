@@ -41,7 +41,11 @@ const CASES = [
     mutate: (d) => sub(d, "index.html", "Morocco Infrastructure Map · v1.6", "Morocco Infrastructure Map · v1.0") },
 
   { defect: "#8 a rendered layer is never wired for interaction", rule: "layer-not-wired",
-    mutate: (d) => sub(d, "app.js", '{ id:"lyr-nhv-backbone",     src:"src-national-hv" },', "") },
+    mutate: (d) => sub(d, "app.js", '"lyr-nhv-backbone", "lyr-nhv-regional"', '"lyr-nhv-regional"') },
+
+  { defect: "#16 interactive layers kept in a second hand-written copy", rule: "interaction-list-duplicated",
+    mutate: (d) => sub(d, "app.js", "const { points, lines } = interactiveLayers();\n    return",
+                                    'const points = [{id:"lyr-power-points"}], lines = [];\n    return') },
 
   { defect: "#9 line features expose no voltage field the renderer reads", rule: "line-voltage-field",
     mutate: (d) => {

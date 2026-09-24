@@ -254,46 +254,6 @@ code{font-family:var(--font-mono);font-size:11px;background:var(--bg-2);padding:
 .map-wrap{position:relative;overflow:hidden;background:#090a0c}
 #map{position:absolute;inset:0}
 
-/* Markers */
-.mg-pin{
-  position:relative;
-  width:14px;height:14px;border-radius:50%;
-  border:1.5px solid rgba(0,0,0,.55);
-  box-shadow:0 0 0 1.5px rgba(255,255,255,.07), 0 2px 5px rgba(0,0,0,.5);
-  cursor:pointer;
-  transition:transform .15s var(--ease);
-}
-.mg-pin:hover{transform:scale(1.3)}
-.mg-pin.solar{background:var(--c-solar)}
-.mg-pin.wind{background:var(--c-wind)}
-.mg-pin.hydro{background:var(--c-hydro)}
-.mg-pin.coal{background:var(--c-coal)}
-.mg-pin.gas{background:var(--c-gas)}
-.mg-pin.oil{background:var(--c-oil)}
-.mg-pin.industrial{background:var(--c-industrial)}
-.mg-pin.digital{background:var(--c-digital)}
-.mg-pin.cable{
-  background:var(--c-cable);
-  width:12px;height:12px;border-radius:1px;
-  transform:rotate(45deg);
-}
-.mg-pin.cable:hover{transform:rotate(45deg) scale(1.3)}
-.mg-pin.announced::after{
-  content:"";position:absolute;inset:-6px;
-  border-radius:50%;background:currentColor;color:var(--c-digital);
-  opacity:.4;z-index:-1;
-  animation:pulse 2s ease-out infinite;
-}
-.mg-pin.construction{
-  border-style:dashed;
-  border-color:rgba(255,255,255,.8);
-}
-@keyframes pulse{
-  0%{transform:scale(.6);opacity:.5}
-  70%{transform:scale(1.9);opacity:0}
-  100%{transform:scale(1.9);opacity:0}
-}
-
 /* Tooltip */
 .tooltip{
   position:absolute;pointer-events:none;z-index:8;

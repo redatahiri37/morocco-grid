@@ -1,0 +1,11 @@
+import { chromium } from "playwright";
+import { createServer } from "node:http"; import { readFileSync, existsSync, statSync } from "node:fs"; import { join, extname } from "node:path";
+const ROOT=process.cwd();
+const srv=createServer((q,r)=>{const f=join(ROOT,new URL(q.url,"http://x").pathname); if(!existsSync(f)||statSync(f).isDirectory()){r.writeHead(404).end();return;} r.writeHead(200,{"content-type":{".html":"text/html",".js":"text/javascript",".css":"text/css"}[extname(f)]||"application/octet-stream"}).end(readFileSync(f));});
+await new Promise(r=>srv.listen(0,"127.0.0.1",r));
+const b=await chromium.launch({executablePath:process.env.CHROMIUM_PATH}); const p=await b.newPage({viewport:{width:1400,height:850}});
+await p.addInitScript(()=>{let real;Object.defineProperty(window,"maplibregl",{configurable:true,get(){return real;},set(v){const M=v.Map;v.Map=class extends M{constructor(o){super(o);window.__map=this;}};real=v;}});});
+if(process.argv[2]==="noglyphs") await p.route(/demotiles\.maplibre\.org/, r=>r.abort());
+await p.goto(`http://127.0.0.1:${srv.address().port}/index.html`); await p.waitForTimeout(7000);
+console.log(process.argv[2], JSON.stringify(await p.evaluate(()=>{const m=window.__map; const c={}; for(const f of m.queryRenderedFeatures()) c[f.layer.id]=(c[f.layer.id]||0)+1; return c;})));
+await b.close(); srv.close();

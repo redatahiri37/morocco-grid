@@ -195,6 +195,36 @@
   function escapeHtml(s){ return String(s==null?"":s).replace(/[&<>"']/g,c=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c])); }
   function layerKind(layerId){ return LAYER_KIND[layerId] || "other"; }
 
+  // Editorial line layers (interconnectors, planned corridors) each get their
+  // own source and sublayers, derived from the manifest. They once shared a
+  // single "src-grid": the second build replaced the first's data, so the
+  // operational interconnectors never reached the map, and toggling either
+  // layer hid both.
+  const GRID_SUBLAYERS = ["hv","mv","lv","planned","idle"];
+  function gridLayerIds(dataLayerId){ return GRID_SUBLAYERS.map(s => `lyr-${dataLayerId}-${s}`); }
+  function gridDataLayers(countryKey){
+    return COUNTRIES[countryKey].layers.filter(L => layerKind(L.id) === "grid").map(L => L.id);
+  }
+
+  // The single list of map layers that answer hover and click. Both
+  // wireLayerInteractions() and queryableLayers() read it, so a layer is
+  // wired everywhere or nowhere. Two hand-kept copies are how the national-HV
+  // lines once rendered with no interaction at all.
+  function interactiveLayers(){
+    return {
+      points: [
+        { id:"lyr-power-points", src:"src-power",      dataLayer:"power-plants" },
+        { id:"lyr-ind-points",   src:"src-industrial", dataLayer:"industrial" },
+        { id:"lyr-dig-points",   src:"src-digital",    dataLayer:"digital" },
+        { id:"lyr-dig-cables",   src:"src-digital",    dataLayer:"digital" }
+      ],
+      lines: [
+        ...gridDataLayers(currentCountry).flatMap(gridLayerIds),
+        "lyr-nhv-backbone", "lyr-nhv-regional", "lyr-nhv-distribution"
+      ]
+    };
+  }
+
   // The engine ships with the site (./vendor), so it fails only if the page
   // itself failed to load. Log rather than cover the map with an overlay.
   function logMapError(reason){
@@ -202,11 +232,9 @@
   }
 
   // ---------- Boot ----------
-  // Data + map init race each other. Before v1.5 the fetches were small
-  // enough that loadAllData usually beat map.on("load"); the 221 KB WBG
-  // transmission file flipped that and buildMapLayers started running
-  // against empty layerData, so nothing rendered. Track both readiness
-  // signals explicitly and only build when both are true.
+  // Data fetches and map init race each other, and either can finish first.
+  // Build layers only once both readiness signals are true; building against
+  // empty layerData renders nothing.
   let dataReady = false, mapReady = false;
   function tryBuild(){
     if(dataReady && mapReady) buildMapLayers(currentCountry);
@@ -378,19 +406,15 @@
   }
 
   // ---------- Layer ID bookkeeping ----------
-  // Each data layer produces a set of Mapbox GL layers. queryableLayers()
-  // returns the ones that should catch clicks (everything except clusters).
+  // Each data layer produces a set of MapLibre layers; toggling a data layer
+  // shows or hides exactly these.
   function layersFor(dataLayerId){
     const kind = layerKind(dataLayerId);
     if(dataLayerId === "oim-grid"){
       return ["lyr-oim-line-lv","lyr-oim-line-mv","lyr-oim-line-hv",
               "lyr-oim-substation-poly","lyr-oim-substation-pt"];
     }
-    if(kind === "grid"){
-      return [
-        "lyr-grid-hv","lyr-grid-mv","lyr-grid-lv","lyr-grid-planned","lyr-grid-idle"
-      ];
-    }
+    if(kind === "grid") return gridLayerIds(dataLayerId);
     if(kind === "national-grid"){
       return ["lyr-nhv-backbone","lyr-nhv-regional","lyr-nhv-distribution"];
     }
@@ -407,21 +431,9 @@
   }
 
   function queryableLayers(){
-    // Only interactive (non-cluster, non-halo) layers
-    const ids = [];
-    if(map && map.getLayer("lyr-grid-hv"))      ids.push("lyr-grid-hv");
-    if(map && map.getLayer("lyr-grid-mv"))      ids.push("lyr-grid-mv");
-    if(map && map.getLayer("lyr-grid-lv"))      ids.push("lyr-grid-lv");
-    if(map && map.getLayer("lyr-grid-planned")) ids.push("lyr-grid-planned");
-    if(map && map.getLayer("lyr-grid-idle"))    ids.push("lyr-grid-idle");
-    if(map && map.getLayer("lyr-nhv-backbone"))     ids.push("lyr-nhv-backbone");
-    if(map && map.getLayer("lyr-nhv-regional"))     ids.push("lyr-nhv-regional");
-    if(map && map.getLayer("lyr-nhv-distribution")) ids.push("lyr-nhv-distribution");
-    if(map && map.getLayer("lyr-power-points")) ids.push("lyr-power-points");
-    if(map && map.getLayer("lyr-ind-points"))   ids.push("lyr-ind-points");
-    if(map && map.getLayer("lyr-dig-points"))   ids.push("lyr-dig-points");
-    if(map && map.getLayer("lyr-dig-cables"))   ids.push("lyr-dig-cables");
-    return ids;
+    if(!map) return [];
+    const { points, lines } = interactiveLayers();
+    return [...lines, ...points.map(l => l.id)].filter(id => map.getLayer(id));
   }
 
   // ---------- Build map layers ----------
@@ -509,19 +521,16 @@
 
     // Each build*Layer call is isolated: if one throws (bad MapLibre
     // expression, missing source, etc.), the rest still render and the
-    // error surfaces in the console for the map-debugger agent.
+    // error surfaces in the console.
     const safe = (label, fn) => {
       try { fn(); }
       catch(e){ console.error("[MoroccoMap] layer failed:", label, e); }
     };
 
-    // Operational interconnectors (ES-MA I/II, DZ-MA idle)
-    safe("interconnectors", () =>
-      buildLineLayer("interconnectors", layerData["interconnectors"] || { features:[] }));
-
-    // Planned corridors (ES-MA III, Xlinks, Dakhla HVDC, WBG 2018 planned)
-    safe("planned-corridors", () =>
-      buildLineLayer("planned-corridors", layerData["planned-corridors"] || { features:[] }));
+    // Editorial line layers, one source each: interconnectors (ES-MA I/II,
+    // DZ-MA idle) and planned corridors (ES-MA III, Xlinks, Dakhla HVDC).
+    gridDataLayers(countryKey).forEach(id =>
+      safe(id, () => buildLineLayer(id, layerData[id] || { features:[] })));
 
     // National HV grid — 947 ONEE transmission lines, voltage-classed
     // (400 kV backbone, 225/150 kV regional, 60 kV distribution).
@@ -560,33 +569,33 @@
   }
 
   function buildLineLayer(dataLayerId, fc){
-    const srcId = "src-grid";
-    const ids = ["lyr-grid-hv","lyr-grid-mv","lyr-grid-lv","lyr-grid-planned","lyr-grid-idle"];
-    ids.forEach(id=>{ if(map.getLayer(id)) map.removeLayer(id); });
+    const srcId = `src-${dataLayerId}`;
+    const [hv, mv, lv, planned, idle] = gridLayerIds(dataLayerId);
+    [hv, mv, lv, planned, idle].forEach(id=>{ if(map.getLayer(id)) map.removeLayer(id); });
     addOrReplace(srcId, { type:"geojson", data: fc });
 
     // Editorial overlay — interconnectors, HVDC corridors, planned/idle
     // strategic links. Rendered bold/colored on top of OIM's grey OSM grid
     // so the strategic story pops.
-    map.addLayer({ id:"lyr-grid-hv", type:"line", source:srcId,
+    map.addLayer({ id:hv, type:"line", source:srcId,
       filter:["all",["==",["get","status"],"operational"],[">=",["get","voltage_kv"],300]],
       paint:{ "line-color":"#0D9488", "line-width":2.6, "line-opacity":0.95 }});
-    map.addLayer({ id:"lyr-grid-mv", type:"line", source:srcId,
+    map.addLayer({ id:mv, type:"line", source:srcId,
       filter:["all",["==",["get","status"],"operational"],[">=",["get","voltage_kv"],100],["<",["get","voltage_kv"],300]],
       paint:{ "line-color":"#0D9488", "line-width":1.6, "line-opacity":0.85 }});
-    map.addLayer({ id:"lyr-grid-lv", type:"line", source:srcId,
+    map.addLayer({ id:lv, type:"line", source:srcId,
       filter:["all",["==",["get","status"],"operational"],["<",["get","voltage_kv"],100]],
       paint:{ "line-color":"#0D9488", "line-width":1.0, "line-opacity":0.6 }});
-    map.addLayer({ id:"lyr-grid-planned", type:"line", source:srcId,
+    map.addLayer({ id:planned, type:"line", source:srcId,
       filter:["==",["get","status"],"planned"],
       paint:{ "line-color":"#a37df0", "line-width":2.0, "line-opacity":0.95, "line-dasharray":[2,2] }});
-    map.addLayer({ id:"lyr-grid-idle", type:"line", source:srcId,
+    map.addLayer({ id:idle, type:"line", source:srcId,
       filter:["==",["get","status"],"idle"],
       paint:{ "line-color":"#8a877c", "line-width":1.6, "line-opacity":0.7, "line-dasharray":[1,2] }});
   }
 
   // National HV grid — own source/layers, filtered by grid_class (backbone /
-  // regional / distribution). Independent from the editorial src-grid so
+  // regional / distribution). Independent from the editorial line sources so
   // both can render simultaneously.
   function buildNationalGridLayer(fc){
     const srcId = "src-national-hv";
@@ -703,17 +712,6 @@
       }
     });
 
-    // Cluster click → zoom in
-    map.on("click","lyr-power-clusters",(e)=>{
-      const f = e.features[0];
-      const clusterId = f.properties.cluster_id;
-      map.getSource(srcId).getClusterExpansionZoom(clusterId, (err, zoom)=>{
-        if(err) return;
-        map.easeTo({ center: f.geometry.coordinates, zoom });
-      });
-    });
-    map.on("mouseenter","lyr-power-clusters", ()=>{ map.getCanvas().style.cursor="pointer"; });
-    map.on("mouseleave","lyr-power-clusters", ()=>{ map.getCanvas().style.cursor=""; });
   }
 
   function buildPointLayer(opts){
@@ -846,28 +844,20 @@
   }
 
   // ---------- Layer interactions (hover dim + tooltip + click) ----------
+  // MapLibre layer-scoped listeners outlive removeLayer(), and layers are
+  // rebuilt on every theme toggle and country switch. Wiring on each rebuild
+  // stacked a fresh copy of every handler each time (13 click handlers, then
+  // 26, 39, ...), so one click opened the popup once per rebuild. Wire each
+  // layer id exactly once.
+  const wiredLayers = new Set();
+
   function wireLayerInteractions(){
-    const pointLayers = [
-      { id:"lyr-power-points", src:"src-power",    dataLayer:"power-plants" },
-      { id:"lyr-ind-points",   src:"src-industrial", dataLayer:"industrial" },
-      { id:"lyr-dig-points",   src:"src-digital",  dataLayer:"digital" },
-      { id:"lyr-dig-cables",   src:"src-digital",  dataLayer:"digital" }
-    ];
-    const lineLayers = [
-      { id:"lyr-grid-hv",      src:"src-grid" },
-      { id:"lyr-grid-mv",      src:"src-grid" },
-      { id:"lyr-grid-lv",      src:"src-grid" },
-      { id:"lyr-grid-planned", src:"src-grid" },
-      { id:"lyr-grid-idle",    src:"src-grid" },
-      // national-hv is the largest layer (947 lines) and was never wired
-      // for hover/click, so its features were inert on the map.
-      { id:"lyr-nhv-backbone",     src:"src-national-hv" },
-      { id:"lyr-nhv-regional",     src:"src-national-hv" },
-      { id:"lyr-nhv-distribution", src:"src-national-hv" }
-    ];
+    const { points, lines } = interactiveLayers();
+    const unwired = (id) => map.getLayer(id) && !wiredLayers.has(id) && wiredLayers.add(id);
+    const pointLayers = points.filter(l => unwired(l.id));
+    const lineLayers  = lines.filter(unwired);
 
     pointLayers.forEach(({id, src, dataLayer})=>{
-      if(!map.getLayer(id)) return;
       map.on("mousemove", id, (e)=>{
         const f = e.features[0]; if(!f) return;
         map.getCanvas().style.cursor = "pointer";
@@ -887,8 +877,21 @@
       });
     });
 
-    lineLayers.forEach(({id, src})=>{
-      if(!map.getLayer(id)) return;
+    // Power-plant clusters: click to zoom in. MapLibre 4 returns a promise
+    // here; the callback form this used to pass was silently ignored, so
+    // clicking a cluster did nothing.
+    if(unwired("lyr-power-clusters")){
+      map.on("click", "lyr-power-clusters", (e)=>{
+        const f = e.features[0];
+        map.getSource("src-power").getClusterExpansionZoom(f.properties.cluster_id)
+          .then(zoom => map.easeTo({ center: f.geometry.coordinates, zoom }))
+          .catch(err => console.warn("[MoroccoMap] cluster zoom failed:", err));
+      });
+      map.on("mouseenter", "lyr-power-clusters", ()=>{ map.getCanvas().style.cursor = "pointer"; });
+      map.on("mouseleave", "lyr-power-clusters", ()=>{ map.getCanvas().style.cursor = ""; });
+    }
+
+    lineLayers.forEach(id=>{
       map.on("mousemove", id, (e)=>{
         const f = e.features[0]; if(!f) return;
         map.getCanvas().style.cursor = "pointer";
