@@ -22,13 +22,13 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const CASES = [
   { defect: "#1 byline names one person, links another", rule: "identity-link-mismatch",
     mutate: (d) => sub(d, "index.html", "https://redatahiri.substack.com/?utm_campaign=profile_chips",
-                                        "https://paczyzak.substack.com/p/data-centers") },
+                                        "https://someone-else.substack.com/") },
 
   { defect: "#2 REPO_URL names a repo that does not exist", rule: "repo-url-mismatch",
     mutate: (d) => sub(d, "app.js", "redatahiri37/morocco-grid", "redatahiri37/morocco-energy-digital-map") },
 
   { defect: "#3 contact mailto at a reserved domain", rule: "reserved-domain",
-    mutate: (d) => sub(d, "index.html", "reda.tahiri1@gmail.com", "reda.tahiri@example.com") },
+    mutate: (d) => sub(d, "index.html", "reda.tahiri1@gmail.com", "reda@test.invalid") },
 
   { defect: "#4 methodology names a data path that is not there", rule: "claimed-path-missing",
     mutate: (d) => sub(d, "index.html", "<code>./data/morocco/</code>", "<code>/docs/data/morocco/</code>") },
