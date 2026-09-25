@@ -63,6 +63,12 @@ const CASES = [
       writeFileSync(p, JSON.stringify(fc));
     } },
 
+  { defect: "sitemap restates the site URL under a different origin", rule: "seo-url-drift",
+    mutate: (d) => sub(d, "sitemap.xml", "https://redatahiri37.github.io/morocco-grid/", "https://redatahiri37.github.io/morocco-energy-map/") },
+
+  { defect: "social preview image referenced but absent", rule: "seo-url-drift",
+    mutate: (d) => unlinkSync(join(d, "og-image.png")) },
+
   { defect: "#12 basemap served by a commercial tile provider", rule: "basemap-not-open",
     mutate: (d) => sub(d, "app.js", "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
                                     "https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png") },

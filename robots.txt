@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://redatahiri37.github.io/morocco-grid/sitemap.xml
